@@ -16,7 +16,7 @@ The Settlement Decision Agent SHALL receive and validate the structured outputs 
 - **THEN** the agent SHALL record `DECISION_BLOCKED_MISSING_INPUT`, list the missing outputs, and route the claim to the Human Review Agent
 
 ### Requirement: Decision recommendation
-The agent SHALL produce one of three recommendations: `APPROVE`, `REJECT`, or `MANUAL_REVIEW`. The recommendation SHALL be computed using a weighted rule engine combined with Azure OpenAI reasoning. Decision rules SHALL be configurable per insurance provider.
+The agent SHALL produce one of three recommendations: `APPROVE`, `REJECT`, or `MANUAL_REVIEW`. The recommendation SHALL be computed using a weighted rule engine combined with Azure AI Foundry reasoning. Decision rules SHALL be configurable per insurance provider.
 
 #### Scenario: Auto-approval — low risk, valid policy, full coverage
 - **WHEN** policy verdict is `POLICY_VALID`, coverage verdict is not `COVERAGE_EXCLUDED`, fraud verdict is `FRAUD_LOW`, and the requested amount is within coverage limits
@@ -53,7 +53,7 @@ The agent SHALL produce a confidence score between 0.0 and 1.0 for every recomme
 - **THEN** the agent SHALL override the recommendation to `MANUAL_REVIEW` and record the low-confidence reason
 
 ### Requirement: Explainable reasoning narrative
-The agent SHALL generate a plain-language reasoning narrative (150–500 words) using Azure OpenAI that explains the recommendation in terms of policy facts, coverage findings, fraud signals, and document evidence. The narrative SHALL be stored in the claim record and presented to human reviewers and customers.
+The agent SHALL generate a plain-language reasoning narrative (150–500 words) using Azure AI Foundry that explains the recommendation in terms of policy facts, coverage findings, fraud signals, and document evidence. The narrative SHALL be stored in the claim record and presented to human reviewers and customers.
 
 #### Scenario: Reasoning narrative generated for all decisions
 - **WHEN** a recommendation is produced

@@ -1,6 +1,6 @@
 ## Purpose
 
-Automatically extracts structured claim information from uploaded documents and images using Azure Document Intelligence and Azure OpenAI, summarizes findings for downstream agents, and identifies any information gaps requiring follow-up.
+Automatically extracts structured claim information from uploaded documents and images using Azure Document Intelligence and Azure AI Foundry, summarizes findings for downstream agents, and identifies any information gaps requiring follow-up.
 
 ## ADDED Requirements
 

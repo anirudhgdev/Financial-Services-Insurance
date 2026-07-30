@@ -56,7 +56,7 @@ The system SHALL provide an API endpoint allowing authorized administrators to e
 - **THEN** the system SHALL return 403 Forbidden and log the unauthorized access attempt
 
 ### Requirement: Health and readiness endpoints
-The system SHALL expose `/health/live` (liveness) and `/health/ready` (readiness) HTTP endpoints returning structured JSON status. Readiness SHALL verify connectivity to Azure SQL, Azure Blob Storage, Azure OpenAI, and the Notification Service.
+The system SHALL expose `/health/live` (liveness) and `/health/ready` (readiness) HTTP endpoints returning structured JSON status. Readiness SHALL verify connectivity to Azure SQL, Azure Blob Storage, Azure AI Foundry, and the Notification Service.
 
 #### Scenario: All dependencies healthy
 - **WHEN** all downstream dependencies respond within their timeout thresholds

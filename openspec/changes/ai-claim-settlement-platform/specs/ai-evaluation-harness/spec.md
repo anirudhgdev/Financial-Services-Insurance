@@ -73,11 +73,11 @@ The harness SHALL compute the human-review rate as the percentage of test cases 
 - **THEN** the report SHALL include human-review rate per scenario type and flag anomalies exceeding the 10-point threshold
 
 ### Requirement: Cost-per-claim estimation
-The harness SHALL estimate the Azure OpenAI token cost per claim processed by recording input and output token counts for each Azure OpenAI call. The report SHALL include mean, P95, and total estimated cost (USD) per evaluation run, broken down by agent.
+The harness SHALL estimate the LLM token cost per claim processed by recording input and output token counts for each Azure AI Foundry call. The report SHALL include mean, P95, and total estimated cost (USD) per evaluation run, broken down by agent.
 
 #### Scenario: Cost estimate included in report
 - **WHEN** evaluation completes
-- **THEN** the report SHALL include per-agent and total token usage with estimated USD cost based on current Azure OpenAI pricing
+- **THEN** the report SHALL include per-agent and total token usage with estimated USD cost based on current Azure AI Foundry pricing
 
 ### Requirement: Benchmark report output
 The harness SHALL produce a benchmark report in both JSON (machine-readable) and Markdown (human-readable) formats. The report SHALL include: run timestamp, environment identifier, dataset version, total cases, pass/fail counts, all computed metrics, and a per-case detail table. Reports SHALL be stored in Azure Blob Storage and accessible via a CLI command.

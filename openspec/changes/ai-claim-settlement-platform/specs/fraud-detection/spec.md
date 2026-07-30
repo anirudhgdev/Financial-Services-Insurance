@@ -5,7 +5,7 @@ Assesses the fraud risk of each claim by computing a composite risk score, detec
 ## ADDED Requirements
 
 ### Requirement: Composite fraud risk scoring
-The Fraud Detection Agent SHALL compute a fraud risk score between 0.0 and 1.0 for each claim by aggregating signals from: the external Fraud Detection Service, Azure OpenAI anomaly reasoning, claim history for the policy, and pattern-matching rules. The score SHALL be stored in the claim record alongside a list of contributing signals.
+The Fraud Detection Agent SHALL compute a fraud risk score between 0.0 and 1.0 for each claim by aggregating signals from: the external Fraud Detection Service, Azure AI Foundry anomaly reasoning, claim history for the policy, and pattern-matching rules. The score SHALL be stored in the claim record alongside a list of contributing signals.
 
 #### Scenario: Low fraud risk claim
 - **WHEN** the computed fraud risk score is below 0.30

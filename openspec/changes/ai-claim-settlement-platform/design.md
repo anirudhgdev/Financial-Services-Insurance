@@ -56,15 +56,23 @@ ClaimAgentContext
 
 ---
 
-### D3: Azure OpenAI (GPT-4o) via the Microsoft Copilot SDK for all LLM calls
+### D3: Azure AI Foundry for LLM model access via Microsoft Copilot SDK
 
-**Decision**: All natural-language generation (summaries, reasoning narratives, fraud explanations, conversational intake) and structured extraction tasks use Azure OpenAI GPT-4o accessed through the Microsoft Copilot SDK. A single `AzureOpenAIClient` is registered as a scoped service and shared across agents.
+**Decision**: All natural-language generation (summaries, reasoning narratives, fraud explanations, conversational intake) and structured extraction tasks use models deployed in Azure AI Foundry, accessed through the Microsoft Copilot SDK. Model selection (GPT-4o, GPT-4o-mini, or future models) is configurable per agent via deployment name in Foundry, not hardcoded. A single `AzureOpenAIClient` is registered as a scoped service and shared across agents, connecting to the Foundry inference endpoint.
 
-**Rationale**: Copilot SDK provides the conversational interface for the Claim Intake Agent and standardizes prompt management. GPT-4o's function-calling capability enables reliable structured output from document analysis and settlement reasoning. A shared client reduces cold-start latency.
+**Rationale**: Azure AI Foundry provides enterprise-grade model serving with:
+- **Model flexibility** — Deploy any LLM (GPT-4o, GPT-4o-mini, future models) without code changes; switch via configuration
+- **Unified model lifecycle management** — Versioning, rollback, A/B testing, quota enforcement per provider
+- **Cost optimization** — Route reasoning tasks to GPT-4o, summarization to GPT-4o-mini, keeping per-claim costs down
+- **Seamless Copilot SDK integration** — Native support via Foundry inference endpoints
+- **Built-in scaling + quotas** — Rate limiting and token management per provider
+
+Copilot SDK provides the conversational interface for the Claim Intake Agent and standardizes prompt management. Function-calling capability (supported by most modern LLMs) enables reliable structured output from document analysis and settlement reasoning. A shared client reduces cold-start latency.
 
 **Alternatives considered**:
+- Direct Azure OpenAI SDK: Rejected — loses model versioning, quota management, and model-agnostic flexibility that Foundry provides.
+- Hardcoding to GPT-4o only: Rejected — limits future model upgrades, cost optimization, and A/B testing.
 - Separate LLM clients per agent: Rejected — increases connection overhead and complicates token-usage tracking for cost-per-claim metrics.
-- Azure AI Foundry (model-as-a-service): Considered for future phases but GPT-4o via Azure OpenAI is the approved model for this release.
 
 ---
 
@@ -124,7 +132,7 @@ IMcpTool<TRequest, TResponse>
 
 | Risk | Mitigation |
 |---|---|
-| Azure OpenAI rate limits causing pipeline throttling under load | Implement token-bucket rate limiting in the shared `AzureOpenAIClient` wrapper; configure retry-with-jitter (max 3 attempts). Monitor TPM/RPM metrics in Application Insights and alert at 80% utilization. |
+| Azure OpenAI rate limits causing pipeline throttling under load | Implement token-bucket rate limiting in the shared `AzureOpenAIClient` wrapper; configure retry-with-jitter (max 3 attempts). Monitor TPM/RPM metrics in Application Insights and alert at 80% utilization. Foundry quotas are enforced per provider — throttle gracefully when limits approached. |
 | MCP Server adapter adds latency to external service calls | Measure adapter overhead during load testing. If overhead exceeds 50 ms P95, consider direct HTTP calls with an adapter interface for testability only. |
 | Azure Document Intelligence confidence degradation on poor-quality scans | Flag low-confidence fields (< 0.80) for human review rather than blocking the pipeline. Track extraction confidence distribution in Application Insights. |
 | Fraud Detection Service unavailability forcing fallback to rule-only scoring | Rule-based fallback is defined in the fraud-detection spec. Add a circuit breaker (Polly) with a 30-second open window. Alert on circuit-open events. |
@@ -138,13 +146,14 @@ IMcpTool<TRequest, TResponse>
 This is a greenfield deployment. No data migration is required.
 
 **Deployment sequence**:
-1. Provision Azure infrastructure (Azure SQL, Blob Storage, Azure OpenAI, AI Search, Application Insights, Entra ID app registrations).
-2. Deploy MCP Server adapters (Policy, Fraud, Notification, DocumentIntelligence).
-3. Deploy the backend API and MAF Orchestrator service.
-4. Deploy the Angular frontend.
-5. Seed provider configuration for the first insurance provider.
-6. Run the evaluation harness against the staging environment with the full test dataset.
-7. Promote to production after harness pass rate ≥ 95% and P95 latency < 30 seconds.
+1. Provision Azure infrastructure (Azure SQL, Blob Storage, Azure AI Foundry with GPT-4o deployment, AI Search, Application Insights, Entra ID app registrations).
+2. Configure Foundry model deployments (GPT-4o for reasoning, GPT-4o-mini for summarization) and obtain inference endpoints.
+3. Deploy MCP Server adapters (Policy, Fraud, Notification, DocumentIntelligence).
+4. Deploy the backend API and MAF Orchestrator service (with Foundry endpoint credentials in Key Vault).
+5. Deploy the Angular frontend.
+6. Seed provider configuration for the first insurance provider.
+7. Run the evaluation harness against the staging environment with the full test dataset.
+8. Promote to production after harness pass rate ≥ 95% and P95 latency < 30 seconds.
 
 **Rollback**: Each service is independently versioned and deployed via container images. Rollback is a redeployment of the prior container tag. Azure SQL schema changes use additive-only migrations (no destructive DDL in the first release).
 

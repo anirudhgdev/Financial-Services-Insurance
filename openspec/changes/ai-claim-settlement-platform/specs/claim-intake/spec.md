@@ -5,7 +5,7 @@ Provides a Copilot-powered conversational interface for customers to initiate in
 ## ADDED Requirements
 
 ### Requirement: Conversational claim submission
-The system SHALL allow authenticated customers to initiate a new insurance claim through a Microsoft Copilot SDK conversational interface. The Claim Intake Agent SHALL guide the customer through a structured conversation collecting: policy number, claimant name, date of loss, type of loss (e.g., auto, property, health), description of loss, loss amount estimate, and contact information.
+The system SHALL allow authenticated customers to initiate a new insurance claim through a Microsoft Copilot SDK conversational interface powered by Azure AI Foundry-hosted models. The Claim Intake Agent SHALL guide the customer through a structured conversation collecting: policy number, claimant name, date of loss, type of loss (e.g., auto, property, health), description of loss, loss amount estimate, and contact information.
 
 #### Scenario: Successful claim initiation
 - **WHEN** an authenticated customer sends a message stating they want to file a claim
