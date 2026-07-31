@@ -1,0 +1,13 @@
+using './main.bicep'
+
+param environmentName = 'staging'
+param location = 'eastus'
+param sqlAdminLogin = 'claimsettlementadmin'
+param sqlAdminPassword = 'REPLACE_WITH_SECURE_VALUE'
+param sqlServerName = 'sql-claimsettlement-stg'
+param sqlDatabaseName = 'claimsettlement-db'
+param storageAccountName = 'stclaimsettlementstg'
+param openAiAccountName = 'openai-claimsettlement-stg'
+param searchServiceName = 'srch-claimsettlement-stg'
+param appInsightsName = 'appi-claimsettlement-stg'
+param logAnalyticsName = 'log-claimsettlement-stg'

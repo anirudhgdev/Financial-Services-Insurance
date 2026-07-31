@@ -1,0 +1,15 @@
+{
+  "displayName": "claim-settlement-mcp-adapters",
+  "signInAudience": "AzureADMyOrg",
+  "requiredResourceAccess": [
+    {
+      "resourceAppId": "<BACKEND_API_APP_ID>",
+      "resourceAccess": [
+        {
+          "id": "00000000-0000-0000-0000-000000000015",
+          "type": "Role"
+        }
+      ]
+    }
+  ]
+}

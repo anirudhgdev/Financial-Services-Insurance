@@ -1,0 +1,64 @@
+{
+  "displayName": "claim-settlement-api",
+  "signInAudience": "AzureADMyOrg",
+  "identifierUris": [
+    "api://claim-settlement-api"
+  ],
+  "api": {
+    "requestedAccessTokenVersion": 2,
+    "oauth2PermissionScopes": [
+      {
+        "id": "00000000-0000-0000-0000-000000000001",
+        "type": "User",
+        "value": "ClaimSettlement.Access",
+        "adminConsentDisplayName": "Access Claim Settlement API",
+        "adminConsentDescription": "Allow access to claim settlement operations.",
+        "userConsentDisplayName": "Access Claim Settlement API",
+        "userConsentDescription": "Allow this app to access claim settlement operations.",
+        "isEnabled": true
+      }
+    ]
+  },
+  "appRoles": [
+    {
+      "id": "00000000-0000-0000-0000-000000000011",
+      "allowedMemberTypes": ["User"],
+      "displayName": "Customer",
+      "description": "Customer claim operations",
+      "value": "Customer",
+      "isEnabled": true
+    },
+    {
+      "id": "00000000-0000-0000-0000-000000000012",
+      "allowedMemberTypes": ["User"],
+      "displayName": "Adjuster",
+      "description": "Adjuster claim review operations",
+      "value": "Adjuster",
+      "isEnabled": true
+    },
+    {
+      "id": "00000000-0000-0000-0000-000000000013",
+      "allowedMemberTypes": ["User"],
+      "displayName": "ProviderAdmin",
+      "description": "Provider administration operations",
+      "value": "ProviderAdmin",
+      "isEnabled": true
+    },
+    {
+      "id": "00000000-0000-0000-0000-000000000014",
+      "allowedMemberTypes": ["User"],
+      "displayName": "PlatformAdmin",
+      "description": "Platform-wide administration operations",
+      "value": "PlatformAdmin",
+      "isEnabled": true
+    },
+    {
+      "id": "00000000-0000-0000-0000-000000000015",
+      "allowedMemberTypes": ["Application"],
+      "displayName": "McpAdapter.Access",
+      "description": "Service-to-service access for MCP adapters",
+      "value": "McpAdapter.Access",
+      "isEnabled": true
+    }
+  ]
+}

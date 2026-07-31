@@ -1,0 +1,21 @@
+{
+  "displayName": "claim-settlement-ui-spa",
+  "signInAudience": "AzureADMyOrg",
+  "spa": {
+    "redirectUris": [
+      "http://localhost:4200",
+      "https://localhost:4200"
+    ]
+  },
+  "requiredResourceAccess": [
+    {
+      "resourceAppId": "<BACKEND_API_APP_ID>",
+      "resourceAccess": [
+        {
+          "id": "00000000-0000-0000-0000-000000000001",
+          "type": "Scope"
+        }
+      ]
+    }
+  ]
+}

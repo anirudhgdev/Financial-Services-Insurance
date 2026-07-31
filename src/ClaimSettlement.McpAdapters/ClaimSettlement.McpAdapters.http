@@ -1,0 +1,6 @@
+@ClaimSettlement.McpAdapters_HostAddress = http://localhost:5014
+
+GET {{ClaimSettlement.McpAdapters_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###
