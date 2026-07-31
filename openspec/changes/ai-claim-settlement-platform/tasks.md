@@ -1,21 +1,21 @@
 ## 1. Solution Structure & Project Scaffolding
 
-- [ ] 1.1 Create the .NET 9 solution `ClaimSettlement.sln` with the following projects: `ClaimSettlement.Api`, `ClaimSettlement.Orchestrator`, `ClaimSettlement.Agents`, `ClaimSettlement.Domain`, `ClaimSettlement.Infrastructure`, `ClaimSettlement.McpAdapters`, `ClaimSettlement.EvalHarness`
-- [ ] 1.2 Add NuGet references: `Microsoft.AgentFramework`, `Microsoft.CopilotSDK`, `Azure.AI.OpenAI`, `Azure.Search.Documents`, `Azure.Storage.Blobs`, `Azure.AI.FormRecognizer`, `Microsoft.EntityFrameworkCore.SqlServer`, `OpenTelemetry.Extensions.Hosting`, `OpenTelemetry.Exporter.AzureMonitor`, `Polly`, `Microsoft.Identity.Web`
-- [ ] 1.3 Create the Angular workspace `claim-settlement-ui` with modules: `claim-portal`, `adjuster-portal`, `admin-portal`, `copilot-chat`
-- [ ] 1.4 Configure Microsoft Entra ID app registrations for frontend SPA, backend API, and service-to-service (MCP adapters)
-- [ ] 1.5 Set up Azure infrastructure: Azure SQL database, Blob Storage containers, Azure OpenAI deployment (GPT-4o), Azure AI Search index, Application Insights workspace
+- [x] 1.1 Create the .NET 9 solution `ClaimSettlement.sln` with the following projects: `ClaimSettlement.Api`, `ClaimSettlement.Orchestrator`, `ClaimSettlement.Agents`, `ClaimSettlement.Domain`, `ClaimSettlement.Infrastructure`, `ClaimSettlement.McpAdapters`, `ClaimSettlement.EvalHarness`
+- [x] 1.2 Add NuGet references: `Microsoft.AgentFramework`, `Microsoft.CopilotSDK`, `Azure.AI.OpenAI`, `Azure.Search.Documents`, `Azure.Storage.Blobs`, `Azure.AI.FormRecognizer`, `Microsoft.EntityFrameworkCore.SqlServer`, `OpenTelemetry.Extensions.Hosting`, `OpenTelemetry.Exporter.AzureMonitor`, `Polly`, `Microsoft.Identity.Web`
+- [x] 1.3 Create the Angular workspace `claim-settlement-ui` with modules: `claim-portal`, `adjuster-portal`, `admin-portal`, `copilot-chat`
+- [x] 1.4 Configure Microsoft Entra ID app registrations for frontend SPA, backend API, and service-to-service (MCP adapters)
+- [x] 1.5 Set up Azure infrastructure: Azure SQL database, Blob Storage containers, Azure OpenAI deployment (GPT-4o), Azure AI Search index, Application Insights workspace
 
 ## 2. Domain Model & Database Schema
 
-- [ ] 2.1 Define `Claim` entity with fields: `ClaimId`, `ProviderId`, `PolicyNumber`, `ClaimantId`, `DateOfLoss`, `ClaimType`, `LossAmount`, `Status`, `CreatedAt`, `UpdatedAt`
-- [ ] 2.2 Define `ClaimPipelineState` entity with fields: `ClaimId`, `ProviderId`, `CurrentStep`, `CompletedSteps` (JSON), `AgentOutputs` (JSON), `Status`, `StartedAt`, `CompletedAt`
-- [ ] 2.3 Define `AgentOutput` entity (per-agent, per-claim): `OutputId`, `ClaimId`, `AgentId`, `OutputPayload` (JSON), `CreatedAt`, `SchemaVersion`
-- [ ] 2.4 Define `AuditLog` entity: `EntryId`, `ClaimId`, `ProviderId`, `EventType`, `ActorId`, `ActorType`, `Payload` (JSON), `Timestamp` — with append-only enforcement
-- [ ] 2.5 Define `ProviderConfiguration` entity with all configurable fields from the `configurable-workflows` spec
-- [ ] 2.6 Define `AdjusterAssignment` entity: `AssignmentId`, `ClaimId`, `AdjusterId`, `AssignedAt`, `DecidedAt`, `Decision`, `Rationale`, `SettlementOverride`
-- [ ] 2.7 Write EF Core migrations (additive-only) for all entities; apply to Azure SQL (staging environment)
-- [ ] 2.8 Implement Row-Level Security policy in Azure SQL filtering all claim/audit tables by `ProviderId`
+- [x] 2.1 Define `Claim` entity with fields: `ClaimId`, `ProviderId`, `PolicyNumber`, `ClaimantId`, `DateOfLoss`, `ClaimType`, `LossAmount`, `Status`, `CreatedAt`, `UpdatedAt`
+- [x] 2.2 Define `ClaimPipelineState` entity with fields: `ClaimId`, `ProviderId`, `CurrentStep`, `CompletedSteps` (JSON), `AgentOutputs` (JSON), `Status`, `StartedAt`, `CompletedAt`
+- [x] 2.3 Define `AgentOutput` entity (per-agent, per-claim): `OutputId`, `ClaimId`, `AgentId`, `OutputPayload` (JSON), `CreatedAt`, `SchemaVersion`
+- [x] 2.4 Define `AuditLog` entity: `EntryId`, `ClaimId`, `ProviderId`, `EventType`, `ActorId`, `ActorType`, `Payload` (JSON), `Timestamp` — with append-only enforcement
+- [x] 2.5 Define `ProviderConfiguration` entity with all configurable fields from the `configurable-workflows` spec
+- [x] 2.6 Define `AdjusterAssignment` entity: `AssignmentId`, `ClaimId`, `AdjusterId`, `AssignedAt`, `DecidedAt`, `Decision`, `Rationale`, `SettlementOverride`
+- [x] 2.7 Write EF Core migrations (additive-only) for all entities; apply to Azure SQL (staging environment)
+- [x] 2.8 Implement Row-Level Security policy in Azure SQL filtering all claim/audit tables by `ProviderId`
 
 ## 3. Authentication & Authorization
 
