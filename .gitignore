@@ -1,3 +1,20 @@
 # .NET build artifacts
 **/bin/
 **/obj/
+
+# IDE and user-specific files
+.vs/
+*.csproj.user
+*.suo
+*.user
+*.userosscache
+*.sln.docstates
+
+# Angular / Node
+node_modules/
+dist/
+*.log
+
+# Environment secrets
+appsettings.Local.json
+*.local.json
