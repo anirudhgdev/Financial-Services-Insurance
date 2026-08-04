@@ -1,10 +1,14 @@
+using ClaimSettlement.Domain.Identity;
+
 namespace ClaimSettlement.Domain.Entities;
 
-public sealed class AdjusterAssignment
+public sealed class AdjusterAssignment : IProviderScoped
 {
     public Guid AssignmentId { get; set; }
 
     public Guid ClaimId { get; set; }
+
+    public string ProviderId { get; set; } = string.Empty;
 
     public string AdjusterId { get; set; } = string.Empty;
 

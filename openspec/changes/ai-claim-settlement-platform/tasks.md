@@ -19,11 +19,11 @@
 
 ## 3. Authentication & Authorization
 
-- [ ] 3.1 Configure `Microsoft.Identity.Web` middleware in `ClaimSettlement.Api` to validate Entra ID bearer tokens
-- [ ] 3.2 Define RBAC roles (`Customer`, `Adjuster`, `ProviderAdmin`, `PlatformAdmin`) and register them in the Entra ID app manifest
-- [ ] 3.3 Implement `IProviderContextAccessor` that extracts `ProviderId` and roles from the authenticated token claims
-- [ ] 3.4 Add authorization policies to all API controllers; enforce provider-scoped data access in all repository queries
-- [ ] 3.5 Configure managed identity for service-to-service calls (API → Azure OpenAI, Azure SQL, Azure Blob Storage, Azure AI Search)
+- [x] 3.1 Configure `Microsoft.Identity.Web` middleware in `ClaimSettlement.Api` to validate Entra ID bearer tokens
+- [x] 3.2 Define RBAC roles (`Customer`, `Adjuster`, `ProviderAdmin`, `PlatformAdmin`) and register them in the Entra ID app manifest
+- [x] 3.3 Implement `IProviderContextAccessor` that extracts `ProviderId` and roles from the authenticated token claims
+- [x] 3.4 Add authorization policies to all API controllers; enforce provider-scoped data access in all repository queries
+- [x] 3.5 Configure managed identity for service-to-service calls (API → Azure OpenAI, Azure SQL, Azure Blob Storage, Azure AI Search)
 
 ## 4. MAF Orchestrator
 

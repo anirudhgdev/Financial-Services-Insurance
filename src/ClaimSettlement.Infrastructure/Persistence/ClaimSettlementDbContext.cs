@@ -166,6 +166,7 @@ public sealed class ClaimSettlementDbContext : DbContext
         modelBuilder.Entity<AdjusterAssignment>(entity =>
         {
             entity.HasKey(x => x.AssignmentId);
+            entity.Property(x => x.ProviderId).HasMaxLength(64).IsRequired();
             entity.Property(x => x.AdjusterId).HasMaxLength(128).IsRequired();
             entity.Property(x => x.Decision).HasMaxLength(32);
             entity.Property(x => x.Rationale).HasMaxLength(4000);
@@ -177,6 +178,7 @@ public sealed class ClaimSettlementDbContext : DbContext
                 .HasForeignKey(x => x.ClaimId)
                 .OnDelete(DeleteBehavior.Cascade);
 
+            entity.HasIndex(x => new { x.ProviderId, x.AssignedAt });
             entity.HasIndex(x => new { x.AdjusterId, x.AssignedAt });
             entity.HasIndex(x => new { x.ClaimId, x.AssignedAt });
         });

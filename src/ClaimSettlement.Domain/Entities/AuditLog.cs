@@ -1,6 +1,8 @@
+using ClaimSettlement.Domain.Identity;
+
 namespace ClaimSettlement.Domain.Entities;
 
-public sealed class AuditLog
+public sealed class AuditLog : IProviderScoped
 {
     public Guid EntryId { get; set; }
 

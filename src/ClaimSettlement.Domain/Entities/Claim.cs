@@ -1,6 +1,8 @@
+using ClaimSettlement.Domain.Identity;
+
 namespace ClaimSettlement.Domain.Entities;
 
-public sealed class Claim
+public sealed class Claim : IProviderScoped
 {
     public Guid ClaimId { get; set; }
 

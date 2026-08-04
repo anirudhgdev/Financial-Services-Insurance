@@ -1,6 +1,8 @@
+using ClaimSettlement.Domain.Identity;
+
 namespace ClaimSettlement.Domain.Entities;
 
-public sealed class ProviderConfiguration
+public sealed class ProviderConfiguration : IProviderScoped
 {
     public string ProviderId { get; set; } = string.Empty;
 
