@@ -1,0 +1,198 @@
+@import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;700&family=IBM+Plex+Sans:wght@400;500;600&display=swap');
+
+:host {
+  --bg-paper: #f5efe4;
+  --ink: #1d2b39;
+  --ink-soft: #465a6a;
+  --panel: #fffaf3;
+  --panel-strong: #f4e4cd;
+  --accent: #cb4f2c;
+  --accent-dark: #8f3118;
+  --ok: #1f7a3d;
+  --warn: #b76600;
+  --danger: #9e2b2b;
+
+  color: var(--ink);
+  display: block;
+  min-height: 100dvh;
+  background:
+    radial-gradient(circle at top right, #ffdcb2 0%, transparent 45%),
+    radial-gradient(circle at 20% 80%, #f7c9b6 0%, transparent 40%),
+    var(--bg-paper);
+  font-family: 'IBM Plex Sans', sans-serif;
+}
+
+.layout {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 1.5rem;
+}
+
+.hero {
+  margin-bottom: 1.5rem;
+}
+
+.eyebrow {
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--accent-dark);
+  font-weight: 600;
+}
+
+h1,
+h2 {
+  font-family: 'Space Grotesk', sans-serif;
+  margin: 0.4rem 0;
+}
+
+.subtitle {
+  color: var(--ink-soft);
+  max-width: 60ch;
+}
+
+.workspace {
+  display: grid;
+  grid-template-columns: 320px 1fr;
+  gap: 1rem;
+}
+
+.queue,
+.package,
+.decision-panel {
+  background: var(--panel);
+  border: 1px solid #e8d8bf;
+  border-radius: 16px;
+  box-shadow: 0 14px 28px rgba(71, 39, 22, 0.08);
+}
+
+.queue {
+  padding: 1rem;
+}
+
+.queue ul {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 0.75rem;
+}
+
+.queue button {
+  width: 100%;
+  text-align: left;
+  border: 1px solid #e7d2b1;
+  border-radius: 12px;
+  padding: 0.7rem;
+  background: #fff;
+  cursor: pointer;
+}
+
+.queue button.active {
+  background: var(--panel-strong);
+  border-color: #d9b480;
+}
+
+.id {
+  display: block;
+  font-weight: 700;
+}
+
+.meta {
+  color: var(--ink-soft);
+  font-size: 0.9rem;
+}
+
+.badge {
+  margin-top: 0.35rem;
+  display: inline-block;
+  padding: 0.15rem 0.5rem;
+  border-radius: 999px;
+  font-size: 0.76rem;
+  font-weight: 600;
+  background: #e8ebee;
+}
+
+.badge[data-status='MANUAL_REVIEW_ASSIGNED'] {
+  background: #dbeee1;
+  color: var(--ok);
+}
+
+.badge[data-status='SLA_BREACHED'] {
+  background: #f5d7d7;
+  color: var(--danger);
+}
+
+.badge[data-status='PENDING_ASSIGNMENT'] {
+  background: #ffe8c4;
+  color: var(--warn);
+}
+
+.detail {
+  display: grid;
+  gap: 1rem;
+}
+
+.package,
+.decision-panel {
+  padding: 1rem;
+}
+
+.package dl {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(180px, 1fr));
+  gap: 0.6rem;
+}
+
+.package dt {
+  font-size: 0.78rem;
+  text-transform: uppercase;
+  color: var(--ink-soft);
+}
+
+.package dd {
+  margin: 0;
+  font-weight: 600;
+}
+
+.decision-panel {
+  display: grid;
+  gap: 0.75rem;
+}
+
+label {
+  display: grid;
+  gap: 0.3rem;
+  font-weight: 500;
+}
+
+select,
+textarea,
+input {
+  border: 1px solid #d9c8a8;
+  border-radius: 10px;
+  padding: 0.55rem;
+  font-family: inherit;
+  background: #fff;
+}
+
+button[type='button'] {
+  border: none;
+  background: linear-gradient(120deg, var(--accent), #d67643);
+  color: #fff;
+  font-weight: 700;
+  padding: 0.75rem 1rem;
+  border-radius: 10px;
+  cursor: pointer;
+}
+
+.message {
+  margin: 0;
+  color: var(--accent-dark);
+  font-weight: 600;
+}
+
+@media (max-width: 900px) {
+  .workspace {
+    grid-template-columns: 1fr;
+  }
+}

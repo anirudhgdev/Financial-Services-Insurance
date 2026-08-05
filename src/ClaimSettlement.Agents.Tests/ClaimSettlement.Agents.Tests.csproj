@@ -26,6 +26,13 @@
     <Compile Include="..\ClaimSettlement.Agents\Models\PipelineModels.cs" Link="Shared\PipelineModels.cs" />
     <Compile Include="..\ClaimSettlement.Agents\Pipeline\DocumentAnalysisSupport.cs" Link="Shared\DocumentAnalysisSupport.cs" />
     <Compile Include="..\ClaimSettlement.Agents\Pipeline\DocumentAnalysisAgent.cs" Link="Shared\DocumentAnalysisAgent.cs" />
+    <Compile Include="..\ClaimSettlement.Agents\Pipeline\PolicyValidationSupport.cs" Link="Shared\PolicyValidationSupport.cs" />
+    <Compile Include="..\ClaimSettlement.Agents\Pipeline\PolicyValidationAgent.cs" Link="Shared\PolicyValidationAgent.cs" />
+    <Compile Include="..\ClaimSettlement.Agents\Pipeline\FraudDetectionSupport.cs" Link="Shared\FraudDetectionSupport.cs" />
+    <Compile Include="..\ClaimSettlement.Agents\Pipeline\FraudDetectionAgent.cs" Link="Shared\FraudDetectionAgent.cs" />
+    <Compile Include="..\ClaimSettlement.Agents\Pipeline\SettlementDecisionAgent.cs" Link="Shared\SettlementDecisionAgent.cs" />
+    <Compile Include="..\ClaimSettlement.Agents\Pipeline\HumanReviewSupport.cs" Link="Shared\HumanReviewSupport.cs" />
+    <Compile Include="..\ClaimSettlement.Agents\Pipeline\HumanReviewAgent.cs" Link="Shared\HumanReviewAgent.cs" />
   </ItemGroup>
 
 </Project>

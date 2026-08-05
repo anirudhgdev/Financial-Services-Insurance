@@ -57,43 +57,43 @@
 
 ## 7. Policy Validation Agent
 
-- [ ] 7.1 Implement `PolicyValidationAgent` that calls the Policy Management MCP tool to retrieve policy details by policy number
-- [ ] 7.2 Implement policy validity check (active on date of loss, not cancelled/lapsed); record verdict
-- [ ] 7.3 Implement coverage, exclusion, and deductible verification; compute net payable amount
-- [ ] 7.4 Implement eligibility determination (identity match, waiting period, premium payment status)
-- [ ] 7.5 Implement retry-with-backoff (3 attempts, 500 ms exponential backoff) for Policy Management API; fall back to `POLICY_CHECK_UNAVAILABLE` and human-review routing on failure
-- [ ] 7.6 Persist policy validation verdict to `AgentOutput` table
-- [ ] 7.7 Write unit tests for each verdict scenario (valid, expired, not found, excluded, partial coverage, eligibility checks)
+- [x] 7.1 Implement `PolicyValidationAgent` that calls the Policy Management MCP tool to retrieve policy details by policy number
+- [x] 7.2 Implement policy validity check (active on date of loss, not cancelled/lapsed); record verdict
+- [x] 7.3 Implement coverage, exclusion, and deductible verification; compute net payable amount
+- [x] 7.4 Implement eligibility determination (identity match, waiting period, premium payment status)
+- [x] 7.5 Implement retry-with-backoff (3 attempts, 500 ms exponential backoff) for Policy Management API; fall back to `POLICY_CHECK_UNAVAILABLE` and human-review routing on failure
+- [x] 7.6 Persist policy validation verdict to `AgentOutput` table
+- [x] 7.7 Write unit tests for each verdict scenario (valid, expired, not found, excluded, partial coverage, eligibility checks)
 
 ## 8. Fraud Detection Agent
 
-- [ ] 8.1 Implement `FraudDetectionAgent` that calls the Fraud Detection Service MCP tool and combines results with rule-based pattern detection
-- [ ] 8.2 Implement composite risk score computation (weighted aggregation of service score, history score, pattern signals)
-- [ ] 8.3 Implement duplicate claim detection query (same policy, date of loss, claim type within configurable deduplication window)
-- [ ] 8.4 Implement pattern rules: high-frequency claimant, new-policy claim, round-amount detection, geographic anomaly
-- [ ] 8.5 Implement Polly circuit breaker for Fraud Detection Service (30-second open window); fall back to rule-only scoring with `FRAUD_SERVICE_UNAVAILABLE` flag
-- [ ] 8.6 Implement fraud signal explainability: generate structured explanation with signal weights and evidence using Azure OpenAI
-- [ ] 8.7 Persist fraud verdict and explanation to `AgentOutput` table
-- [ ] 8.8 Write unit tests for each fraud scenario (low, medium, high, duplicate, pattern rules, service unavailability)
+- [x] 8.1 Implement `FraudDetectionAgent` that calls the Fraud Detection Service MCP tool and combines results with rule-based pattern detection
+- [x] 8.2 Implement composite risk score computation (weighted aggregation of service score, history score, pattern signals)
+- [x] 8.3 Implement duplicate claim detection query (same policy, date of loss, claim type within configurable deduplication window)
+- [x] 8.4 Implement pattern rules: high-frequency claimant, new-policy claim, round-amount detection, geographic anomaly
+- [x] 8.5 Implement Polly circuit breaker for Fraud Detection Service (30-second open window); fall back to rule-only scoring with `FRAUD_SERVICE_UNAVAILABLE` flag
+- [x] 8.6 Implement fraud signal explainability: generate structured explanation with signal weights and evidence using Azure OpenAI
+- [x] 8.7 Persist fraud verdict and explanation to `AgentOutput` table
+- [x] 8.8 Write unit tests for each fraud scenario (low, medium, high, duplicate, pattern rules, service unavailability)
 
 ## 9. Settlement Decision Agent
 
-- [ ] 9.1 Implement `SettlementDecisionAgent` that reads all upstream `AgentOutput` records and validates their presence
-- [ ] 9.2 Implement the weighted rule engine for `APPROVE`, `REJECT`, `MANUAL_REVIEW` recommendation logic (configurable rules per provider)
-- [ ] 9.3 Implement recommended settlement amount computation: `min(claimed, coverage_limit) - deductible`
-- [ ] 9.4 Implement confidence score computation; auto-escalate to `MANUAL_REVIEW` if confidence < 0.70
-- [ ] 9.5 Implement reasoning narrative generation using Azure OpenAI GPT-4o (150–500 words, referencing upstream agent evidence)
-- [ ] 9.6 Implement decision record immutability: persist to `AgentOutput` table as immutable; create new versioned record for overrides
-- [ ] 9.7 Write unit tests for all decision scenarios (auto-approve, reject-expired, reject-excluded, manual-high-fraud, manual-ambiguous, low-confidence escalation)
+- [x] 9.1 Implement `SettlementDecisionAgent` that reads all upstream `AgentOutput` records and validates their presence
+- [x] 9.2 Implement the weighted rule engine for `APPROVE`, `REJECT`, `MANUAL_REVIEW` recommendation logic (configurable rules per provider)
+- [x] 9.3 Implement recommended settlement amount computation: `min(claimed, coverage_limit) - deductible`
+- [x] 9.4 Implement confidence score computation; auto-escalate to `MANUAL_REVIEW` if confidence < 0.70
+- [x] 9.5 Implement reasoning narrative generation using Azure OpenAI GPT-4o (150–500 words, referencing upstream agent evidence)
+- [x] 9.6 Implement decision record immutability: persist to `AgentOutput` table as immutable; create new versioned record for overrides
+- [x] 9.7 Write unit tests for all decision scenarios (auto-approve, reject-expired, reject-excluded, manual-high-fraud, manual-ambiguous, low-confidence escalation)
 
 ## 10. Human Review Agent & Adjuster Portal
 
-- [ ] 10.1 Implement `HumanReviewAgent` that places claims in the adjuster assignment queue in Azure SQL, applying workload and specialization routing
-- [ ] 10.2 Implement SLA tracker: background job checks queue every 5 minutes; escalate to supervisor and set `SLA_BREACHED` status for overdue claims
-- [ ] 10.3 Implement AI-assisted review package assembly: aggregate all agent outputs into a structured summary DTO for the adjuster portal
-- [ ] 10.4 Implement `POST /api/v1/claims/{claimId}/adjuster-decision` endpoint: validate rationale length (≥ 20 chars), persist decision, trigger notification
-- [ ] 10.5 Build Angular adjuster portal: claim queue view, claim detail with AI review package, decision submission form with rationale and settlement override
-- [ ] 10.6 Write unit tests for assignment routing, SLA breach detection, and decision capture validation
+- [x] 10.1 Implement `HumanReviewAgent` that places claims in the adjuster assignment queue in Azure SQL, applying workload and specialization routing
+- [x] 10.2 Implement SLA tracker: background job checks queue every 5 minutes; escalate to supervisor and set `SLA_BREACHED` status for overdue claims
+- [x] 10.3 Implement AI-assisted review package assembly: aggregate all agent outputs into a structured summary DTO for the adjuster portal
+- [x] 10.4 Implement `POST /api/v1/claims/{claimId}/adjuster-decision` endpoint: validate rationale length (≥ 20 chars), persist decision, trigger notification
+- [x] 10.5 Build Angular adjuster portal: claim queue view, claim detail with AI review package, decision submission form with rationale and settlement override
+- [x] 10.6 Write unit tests for assignment routing, SLA breach detection, and decision capture validation
 
 ## 11. Notification Agent
 

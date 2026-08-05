@@ -6,9 +6,11 @@ var builder = Host.CreateApplicationBuilder(args);
 
 builder.Services.AddClaimSettlementInfrastructure(builder.Configuration);
 builder.Services.AddClaimSettlementAgents();
+builder.Services.AddScoped<ClaimSettlement.Agents.Pipeline.IHumanReviewQueueStore, SqlHumanReviewQueueStore>();
 
 builder.Services.Configure<OrchestratorOptions>(builder.Configuration.GetSection(OrchestratorOptions.SectionName));
 builder.Services.AddHostedService<ClaimPipelineOrchestrator>();
+builder.Services.AddHostedService<HumanReviewSlaTrackerService>();
 
 var host = builder.Build();
 host.Run();
