@@ -38,12 +38,12 @@
 
 ## 5. Claim Intake Agent
 
-- [ ] 5.1 Implement `ClaimIntakeAgent` using Microsoft Copilot SDK to drive a multi-turn conversational claim collection flow
-- [ ] 5.2 Implement mandatory field validation for all claim types; return structured gap list for missing fields
-- [ ] 5.3 Implement document upload endpoint `POST /api/v1/claims/{claimId}/documents` — validate file type (PDF, JPEG, PNG, TIFF), size (≤ 50 MB), and count (≤ 10); store in Azure Blob Storage
-- [ ] 5.4 Implement duplicate submission guard: query `Claim` table for matching policy number + date of loss within 24 hours; require explicit customer confirmation
-- [ ] 5.5 Create `Claim` record in Azure SQL with status `INTAKE_COMPLETE` and return claim ID to customer
-- [ ] 5.6 Write unit tests for mandatory field validation, duplicate guard, and document upload constraints
+- [x] 5.1 Implement `ClaimIntakeAgent` using Microsoft Copilot SDK to drive a multi-turn conversational claim collection flow
+- [x] 5.2 Implement mandatory field validation for all claim types; return structured gap list for missing fields
+- [x] 5.3 Implement document upload endpoint `POST /api/v1/claims/{claimId}/documents` — validate file type (PDF, JPEG, PNG, TIFF), size (≤ 50 MB), and count (≤ 10); store in Azure Blob Storage
+- [x] 5.4 Implement duplicate submission guard: query `Claim` table for matching policy number + date of loss within 24 hours; require explicit customer confirmation
+- [x] 5.5 Create `Claim` record in Azure SQL with status `INTAKE_COMPLETE` and return claim ID to customer
+- [x] 5.6 Write unit tests for mandatory field validation, duplicate guard, and document upload constraints
 
 ## 6. Document Analysis Agent
 

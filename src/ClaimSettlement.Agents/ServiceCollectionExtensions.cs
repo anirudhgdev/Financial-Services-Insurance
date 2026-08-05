@@ -7,6 +7,7 @@ public static class ServiceCollectionExtensions
 {
     public static IServiceCollection AddClaimSettlementAgents(this IServiceCollection services)
     {
+        services.AddScoped<ClaimIntakeAgent>();
         services.AddScoped<DocumentAnalysisAgent>();
         services.AddScoped<PolicyValidationAgent>();
         services.AddScoped<FraudDetectionAgent>();

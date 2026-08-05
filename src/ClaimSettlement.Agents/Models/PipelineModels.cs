@@ -2,6 +2,24 @@ using ClaimSettlement.Domain.Entities;
 
 namespace ClaimSettlement.Agents.Models;
 
+public sealed class ClaimIntakeInput
+{
+    public string SessionId { get; init; } = string.Empty;
+
+    public string Message { get; init; } = string.Empty;
+
+    public IReadOnlyDictionary<string, string> CollectedFields { get; init; } = new Dictionary<string, string>();
+}
+
+public sealed class ClaimIntakeResult
+{
+    public string Prompt { get; init; } = string.Empty;
+
+    public IReadOnlyList<string> MissingFields { get; init; } = Array.Empty<string>();
+
+    public bool ReadyForSubmission { get; init; }
+}
+
 public sealed record ClaimPipelineInput(Claim ClaimRecord);
 
 public sealed record HumanReviewInput(string Reason);

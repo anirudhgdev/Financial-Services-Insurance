@@ -1,4 +1,5 @@
 using ClaimSettlement.Api.Authorization;
+using ClaimSettlement.Api.Claims;
 using ClaimSettlement.Api.Identity;
 using ClaimSettlement.Domain.Identity;
 using ClaimSettlement.Infrastructure;
@@ -10,6 +11,8 @@ var builder = WebApplication.CreateBuilder(args);
 // Add services to the container.
 // Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi
 builder.Services.AddOpenApi();
+builder.Services.AddControllers();
+builder.Services.AddMemoryCache();
 
 // Configure Microsoft Entra ID bearer token authentication.
 builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
@@ -24,6 +27,7 @@ builder.Services.AddScoped<IProviderContextAccessor, ProviderContextAccessor>();
 
 // Register persistence and data-access services.
 builder.Services.AddClaimSettlementInfrastructure(builder.Configuration);
+builder.Services.AddClaimIntakeServices();
 
 var app = builder.Build();
 
