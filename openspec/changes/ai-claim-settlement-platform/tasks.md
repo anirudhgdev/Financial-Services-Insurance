@@ -27,14 +27,14 @@
 
 ## 4. MAF Orchestrator
 
-- [ ] 4.1 Define `IClaimAgent<TInput, TOutput>` interface with `InvokeAsync(ClaimAgentContext context, TInput input, CancellationToken ct)` signature
-- [ ] 4.2 Implement `ClaimAgentContext` DTO with fields: `ClaimId`, `ClaimRecord`, `UpstreamOutputs`, `ProviderConfig`, `UserIdentity`
-- [ ] 4.3 Implement `ClaimPipelineOrchestrator` as an ASP.NET Core `BackgroundService` that reads pending claims from Azure SQL and executes the agent pipeline
-- [ ] 4.4 Implement durable pipeline state machine: persist step completion to `ClaimPipelineState` after each agent; support resume-from-last-step on restart
-- [ ] 4.5 Implement agent invocation with retry (2 retries, 2-second delay) and output schema validation; route to human review on exhausted retries
-- [ ] 4.6 Implement concurrency limiter (configurable max per provider, default 100) using `SemaphoreSlim`; queue excess claims in FIFO order
-- [ ] 4.7 Implement human-review branch: detect `MANUAL_REVIEW` recommendation and invoke `HumanReviewAgent`
-- [ ] 4.8 Emit OpenTelemetry `ActivitySource` spans for each agent invocation (agent name, claim ID, duration, outcome)
+- [x] 4.1 Define `IClaimAgent<TInput, TOutput>` interface with `InvokeAsync(ClaimAgentContext context, TInput input, CancellationToken ct)` signature
+- [x] 4.2 Implement `ClaimAgentContext` DTO with fields: `ClaimId`, `ClaimRecord`, `UpstreamOutputs`, `ProviderConfig`, `UserIdentity`
+- [x] 4.3 Implement `ClaimPipelineOrchestrator` as an ASP.NET Core `BackgroundService` that reads pending claims from Azure SQL and executes the agent pipeline
+- [x] 4.4 Implement durable pipeline state machine: persist step completion to `ClaimPipelineState` after each agent; support resume-from-last-step on restart
+- [x] 4.5 Implement agent invocation with retry (2 retries, 2-second delay) and output schema validation; route to human review on exhausted retries
+- [x] 4.6 Implement concurrency limiter (configurable max per provider, default 100) using `SemaphoreSlim`; queue excess claims in FIFO order
+- [x] 4.7 Implement human-review branch: detect `MANUAL_REVIEW` recommendation and invoke `HumanReviewAgent`
+- [x] 4.8 Emit OpenTelemetry `ActivitySource` spans for each agent invocation (agent name, claim ID, duration, outcome)
 
 ## 5. Claim Intake Agent
 

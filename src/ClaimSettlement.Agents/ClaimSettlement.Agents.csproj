@@ -16,4 +16,8 @@
     <PackageReference Include="Polly" Version="8.5.1" />
   </ItemGroup>
 
+  <ItemGroup>
+    <ProjectReference Include="..\ClaimSettlement.Domain\ClaimSettlement.Domain.csproj" />
+  </ItemGroup>
+
 </Project>

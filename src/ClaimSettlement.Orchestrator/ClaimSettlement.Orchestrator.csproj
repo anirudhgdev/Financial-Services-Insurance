@@ -16,4 +16,9 @@
     <PackageReference Include="Azure.Search.Documents" Version="11.7.0" />
     <PackageReference Include="Azure.Storage.Blobs" Version="12.23.0" />
   </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\ClaimSettlement.Agents\ClaimSettlement.Agents.csproj" />
+    <ProjectReference Include="..\ClaimSettlement.Infrastructure\ClaimSettlement.Infrastructure.csproj" />
+  </ItemGroup>
 </Project>
