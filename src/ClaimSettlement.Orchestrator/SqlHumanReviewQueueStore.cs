@@ -63,7 +63,12 @@ public sealed class SqlHumanReviewQueueStore : IHumanReviewQueueStore
                 reason,
                 assignedAdjuster,
                 queuedAtUtc = now,
-                pendingAssignment = assignedAdjuster is null
+                pendingAssignment = assignedAdjuster is null,
+                notificationEventType = "HUMAN_REVIEW_ASSIGNED",
+                message = assignedAdjuster is null
+                    ? "Your claim requires manual review and is waiting for adjuster assignment."
+                    : "Your claim has been assigned to an adjuster for manual review.",
+                responseDeadlineUtc = now.AddHours(context.ProviderConfig.AdjusterSlaPeriodHours)
             }),
             CreatedAt = now,
             SchemaVersion = "1.0"

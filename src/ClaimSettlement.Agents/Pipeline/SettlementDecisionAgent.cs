@@ -1,5 +1,6 @@
 using ClaimSettlement.Agents.Abstractions;
 using ClaimSettlement.Agents.Models;
+using System.Text.Json;
 
 namespace ClaimSettlement.Agents.Pipeline;
 
@@ -61,6 +62,11 @@ public sealed class SettlementDecisionAgent : IClaimAgent<ClaimPipelineInput, Se
 
         var confidence = ComputeConfidence(policy, fraud, docAnalysis);
         if (confidence < 0.70m)
+        {
+            recommendation = "MANUAL_REVIEW";
+        }
+
+        if (IsAlwaysManualClaimType(input.ClaimRecord.ClaimType, context.ProviderConfig.AlwaysManualClaimTypes))
         {
             recommendation = "MANUAL_REVIEW";
         }
@@ -151,6 +157,24 @@ public sealed class SettlementDecisionAgent : IClaimAgent<ClaimPipelineInput, Se
     private static int ResolveDecisionVersion(ClaimAgentContext context)
     {
         return context.UpstreamOutputs.ContainsKey("SettlementDecisionAgent") ? 2 : 1;
+    }
+
+    private static bool IsAlwaysManualClaimType(string claimType, string alwaysManualClaimTypesJson)
+    {
+        if (string.IsNullOrWhiteSpace(claimType) || string.IsNullOrWhiteSpace(alwaysManualClaimTypesJson) || alwaysManualClaimTypesJson == "[]")
+        {
+            return false;
+        }
+
+        try
+        {
+            var claimTypes = JsonSerializer.Deserialize<List<string>>(alwaysManualClaimTypesJson) ?? [];
+            return claimTypes.Any(x => string.Equals(x, claimType, StringComparison.OrdinalIgnoreCase));
+        }
+        catch
+        {
+            return false;
+        }
     }
 
     private static string BuildReasoningNarrative(

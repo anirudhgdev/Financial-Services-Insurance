@@ -273,6 +273,23 @@ public sealed class PolicyFraudSettlementHumanReviewTests
     }
 
     [Fact]
+    public async Task SettlementDecision_RoutesManualReview_WhenClaimTypeAlwaysManualConfigured()
+    {
+        var claim = BuildClaim(lossAmount: 1500m, claimType: "property");
+        var context = BuildContext(claim, new Dictionary<string, object>
+        {
+            ["DocumentAnalysisAgent"] = new DocumentAnalysisResult { Confidence = 0.95m, Summary = "complete" },
+            ["PolicyValidationAgent"] = new PolicyValidationResult { PolicyVerdict = "POLICY_VALID", CoverageVerdict = "COVERAGE_VALID", EligibilityVerdict = "ELIGIBLE", Verdict = "POLICY_VALID", CoverageLimit = 2500m, Deductible = 250m },
+            ["FraudDetectionAgent"] = new FraudDetectionResult { Verdict = "FRAUD_LOW", RiskScore = 0.1m }
+        });
+
+        context.ProviderConfig.AlwaysManualClaimTypes = "[\"property\"]";
+
+        var result = await new SettlementDecisionAgent().InvokeAsync(context, new ClaimPipelineInput(claim), CancellationToken.None);
+        Assert.Equal("MANUAL_REVIEW", result.Recommendation);
+    }
+
+    [Fact]
     public async Task HumanReviewAgent_AssignsClaimAndBuildsReviewPackage()
     {
         var claim = BuildClaim();

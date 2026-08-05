@@ -19,9 +19,12 @@ public static class ServiceCollectionExtensions
         services.AddDbContext<ClaimSettlementDbContext>(options =>
             options.UseSqlServer(configuration.GetConnectionString("ClaimSettlementDb")));
 
+        services.AddMemoryCache();
+
         services.AddClaimSettlementAzureClients(configuration);
 
         services.AddScoped(typeof(IRepository<>), typeof(EfRepository<>));
+        services.AddScoped<IProviderConfigurationService, ProviderConfigurationService>();
 
         return services;
     }

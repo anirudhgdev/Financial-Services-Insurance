@@ -20,6 +20,7 @@ public sealed class ClaimIntakeService : IClaimIntakeService
     private readonly IDocumentUploadPolicy _documentUploadPolicy;
     private readonly BlobServiceClient _blobServiceClient;
     private readonly AzureStorageOptions _storageOptions;
+    private readonly IProviderConfigurationService _providerConfigurationService;
 
     public ClaimIntakeService(
         IMemoryCache memoryCache,
@@ -28,7 +29,8 @@ public sealed class ClaimIntakeService : IClaimIntakeService
         IClaimDuplicateGuard duplicateGuard,
         IDocumentUploadPolicy documentUploadPolicy,
         BlobServiceClient blobServiceClient,
-        IOptions<AzureStorageOptions> storageOptions)
+        IOptions<AzureStorageOptions> storageOptions,
+        IProviderConfigurationService providerConfigurationService)
     {
         _memoryCache = memoryCache;
         _dbContext = dbContext;
@@ -37,6 +39,7 @@ public sealed class ClaimIntakeService : IClaimIntakeService
         _documentUploadPolicy = documentUploadPolicy;
         _blobServiceClient = blobServiceClient;
         _storageOptions = storageOptions.Value;
+        _providerConfigurationService = providerConfigurationService;
     }
 
     public async Task<ClaimIntakeConversationResponse> ContinueConversationAsync(
@@ -52,7 +55,7 @@ public sealed class ClaimIntakeService : IClaimIntakeService
         session.LastUpdatedUtc = DateTime.UtcNow;
         _memoryCache.Set(GetCacheKey(session.SessionId), session, SessionTtl);
 
-        var providerConfig = await GetProviderConfigurationAsync(providerId, ct);
+        var providerConfig = await _providerConfigurationService.GetConfigurationAsync(providerId, ct);
         var claimType = session.CollectedFields.GetValueOrDefault("ClaimType", string.Empty);
         var gaps = _validationService.GetMandatoryFieldGaps(
             session.CollectedFields,
@@ -92,7 +95,7 @@ public sealed class ClaimIntakeService : IClaimIntakeService
             };
         }
 
-        var providerConfig = await GetProviderConfigurationAsync(providerId, ct);
+        var providerConfig = await _providerConfigurationService.GetConfigurationAsync(providerId, ct);
         var claimType = session.CollectedFields.GetValueOrDefault("ClaimType", string.Empty);
         var gaps = _validationService.GetMandatoryFieldGaps(
             session.CollectedFields,
@@ -147,6 +150,7 @@ public sealed class ClaimIntakeService : IClaimIntakeService
 
         if (existingClaim is null)
         {
+            var now = DateTime.UtcNow;
             var claim = new Claim
             {
                 ClaimId = session.ClaimId,
@@ -157,11 +161,27 @@ public sealed class ClaimIntakeService : IClaimIntakeService
                 ClaimType = claimType,
                 LossAmount = decimal.Parse(session.CollectedFields["LossAmount"], CultureInfo.InvariantCulture),
                 Status = "INTAKE_COMPLETE",
-                CreatedAt = DateTime.UtcNow,
-                UpdatedAt = DateTime.UtcNow
+                CreatedAt = now,
+                UpdatedAt = now
             };
 
             _dbContext.Claims.Add(claim);
+            _dbContext.AgentOutputs.Add(new AgentOutput
+            {
+                OutputId = Guid.NewGuid(),
+                ClaimId = claim.ClaimId,
+                AgentId = "ClaimIntake",
+                OutputPayload = System.Text.Json.JsonSerializer.Serialize(new
+                {
+                    notificationEventType = "INTAKE_CONFIRMED",
+                    message = "Your claim intake has been received and processing has started.",
+                    eventTimestampUtc = now,
+                    claimStatus = "INTAKE_COMPLETE"
+                }),
+                CreatedAt = now,
+                SchemaVersion = "1.0"
+            });
+
             await _dbContext.SaveChangesAsync(ct);
         }
 
@@ -296,28 +316,4 @@ public sealed class ClaimIntakeService : IClaimIntakeService
         return count;
     }
 
-    private async Task<ProviderConfiguration> GetProviderConfigurationAsync(string providerId, CancellationToken ct)
-    {
-        return await _dbContext.ProviderConfigurations
-            .AsNoTracking()
-            .FirstOrDefaultAsync(x => x.ProviderId == providerId && x.IsActive, ct)
-            ?? new ProviderConfiguration
-            {
-                ProviderId = providerId,
-                ProviderName = "Default",
-                ManualReviewFraudThreshold = 0.70m,
-                ManualReviewClaimAmountThreshold = decimal.MaxValue,
-                DeduplicationWindowDays = 90,
-                InformationRequestDeadlineDays = 7,
-                AdjusterSlaPeriodHours = 48,
-                SupportedClaimTypes = "[]",
-                SupportedNotificationChannels = "[]",
-                PipelineConcurrencyLimit = 100,
-                IsActive = true,
-                ClaimTypeMandatoryFields = "{}",
-                CoverageMappingRules = "{}",
-                ExclusionSets = "{}",
-                AlwaysManualClaimTypes = "[]"
-            };
-    }
 }

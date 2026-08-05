@@ -141,15 +141,12 @@ public sealed class ClaimPipelineOrchestrator : BackgroundService
     private async Task<int> ResolveProviderConcurrencyLimitAsync(string providerId, CancellationToken ct)
     {
         using var scope = _scopeFactory.CreateScope();
-        var dbContext = scope.ServiceProvider.GetRequiredService<ClaimSettlementDbContext>();
+        var providerConfigurationService = scope.ServiceProvider.GetRequiredService<IProviderConfigurationService>();
+        var configuration = await providerConfigurationService.GetConfigurationAsync(providerId, ct);
 
-        var configuredLimit = await dbContext.ProviderConfigurations
-            .AsNoTracking()
-            .Where(x => x.ProviderId == providerId && x.IsActive)
-            .Select(x => (int?)x.PipelineConcurrencyLimit)
-            .FirstOrDefaultAsync(ct);
-
-        var resolved = configuredLimit.GetValueOrDefault(_options.DefaultProviderConcurrencyLimit);
+        var resolved = configuration.PipelineConcurrencyLimit <= 0
+            ? _options.DefaultProviderConcurrencyLimit
+            : configuration.PipelineConcurrencyLimit;
         return Math.Max(1, resolved);
     }
 
@@ -162,6 +159,7 @@ public sealed class ClaimPipelineOrchestrator : BackgroundService
         {
             using var scope = _scopeFactory.CreateScope();
             var dbContext = scope.ServiceProvider.GetRequiredService<ClaimSettlementDbContext>();
+            var providerConfigurationService = scope.ServiceProvider.GetRequiredService<IProviderConfigurationService>();
 
             var claim = await dbContext.Claims
                 .Include(x => x.PipelineState)
@@ -173,12 +171,19 @@ public sealed class ClaimPipelineOrchestrator : BackgroundService
                 return;
             }
 
-            var providerConfig = await GetProviderConfigurationAsync(dbContext, providerId, ct);
+            var providerConfig = await providerConfigurationService.GetConfigurationAsync(providerId, ct);
             var pipelineState = EnsurePipelineState(claim, providerId);
+            pipelineState.ProviderConfigSnapshot = JsonSerializer.Serialize(providerConfig, SerializerOptions);
 
             claim.Status = "PIPELINE_IN_PROGRESS";
             claim.UpdatedAt = DateTime.UtcNow;
             pipelineState.Status = "PIPELINE_IN_PROGRESS";
+            AddLifecycleNotificationEvent(
+                dbContext,
+                claim,
+                "PROCESSING_MILESTONE",
+                "Claim processing has started.",
+                claim.Status);
             await dbContext.SaveChangesAsync(ct);
 
             var completedSteps = DeserializeCompletedSteps(pipelineState.CompletedSteps);
@@ -227,6 +232,38 @@ public sealed class ClaimPipelineOrchestrator : BackgroundService
                 pipelineState.AgentOutputs = JsonSerializer.Serialize(persistedOutputs, SerializerOptions);
                 claim.UpdatedAt = DateTime.UtcNow;
 
+                AddLifecycleNotificationEvent(
+                    dbContext,
+                    claim,
+                    "PROCESSING_MILESTONE",
+                    $"Processing milestone completed: {step.Name}.",
+                    claim.Status);
+
+                if (string.Equals(step.Name, "DocumentAnalysisAgent", StringComparison.Ordinal) &&
+                    TryGetBlockingMissingItems(invocationResult.SerializedOutput, out var blockingItems) &&
+                    blockingItems.Count > 0)
+                {
+                    AddLifecycleNotificationEvent(
+                        dbContext,
+                        claim,
+                        "INFO_REQUESTED",
+                        "Additional documents or details are required to continue claim processing.",
+                        claim.Status,
+                        DateTime.UtcNow.AddDays(providerConfig.InformationRequestDeadlineDays),
+                        blockingItems);
+                }
+
+                if (string.Equals(step.Name, "SettlementDecisionAgent", StringComparison.Ordinal))
+                {
+                    var recommendation = invocationResult.Recommendation ?? "UNKNOWN";
+                    AddLifecycleNotificationEvent(
+                        dbContext,
+                        claim,
+                        "DECISION_READY",
+                        $"A settlement decision recommendation is available: {recommendation}.",
+                        claim.Status);
+                }
+
                 await dbContext.SaveChangesAsync(ct);
 
                 if (string.Equals(step.Name, "SettlementDecisionAgent", StringComparison.Ordinal) &&
@@ -249,6 +286,12 @@ public sealed class ClaimPipelineOrchestrator : BackgroundService
             pipelineState.CompletedAt = DateTime.UtcNow;
             claim.Status = "PIPELINE_COMPLETE";
             claim.UpdatedAt = DateTime.UtcNow;
+            AddLifecycleNotificationEvent(
+                dbContext,
+                claim,
+                "PIPELINE_COMPLETED",
+                "Claim processing is complete.",
+                claim.Status);
             await dbContext.SaveChangesAsync(ct);
         }
         catch (Exception ex)
@@ -271,46 +314,13 @@ public sealed class ClaimPipelineOrchestrator : BackgroundService
             CurrentStep = "NONE",
             CompletedSteps = "[]",
             AgentOutputs = "{}",
+            ProviderConfigSnapshot = "{}",
             Status = "PIPELINE_IN_PROGRESS",
             StartedAt = DateTime.UtcNow
         };
 
         claim.PipelineState = state;
         return state;
-    }
-
-    private async Task<ProviderConfiguration> GetProviderConfigurationAsync(
-        ClaimSettlementDbContext dbContext,
-        string providerId,
-        CancellationToken ct)
-    {
-        var configuration = await dbContext.ProviderConfigurations
-            .AsNoTracking()
-            .FirstOrDefaultAsync(x => x.ProviderId == providerId && x.IsActive, ct);
-
-        if (configuration is not null)
-        {
-            return configuration;
-        }
-
-        return new ProviderConfiguration
-        {
-            ProviderId = providerId,
-            ProviderName = "Default",
-            ManualReviewFraudThreshold = 0.70m,
-            ManualReviewClaimAmountThreshold = decimal.MaxValue,
-            DeduplicationWindowDays = 90,
-            InformationRequestDeadlineDays = 7,
-            AdjusterSlaPeriodHours = 48,
-            SupportedClaimTypes = "[]",
-            SupportedNotificationChannels = "[]",
-            PipelineConcurrencyLimit = _options.DefaultProviderConcurrencyLimit,
-            IsActive = true,
-            ClaimTypeMandatoryFields = "{}",
-            CoverageMappingRules = "{}",
-            ExclusionSets = "{}",
-            AlwaysManualClaimTypes = "[]"
-        };
     }
 
     private static List<string> DeserializeCompletedSteps(string completedStepsJson)
@@ -459,7 +469,9 @@ public sealed class ClaimPipelineOrchestrator : BackgroundService
         string reason,
         CancellationToken ct)
     {
-        var context = BuildAgentContext(claim, await GetProviderConfigurationAsync(dbContext, claim.ProviderId, ct), persistedOutputs);
+        var providerConfigurationService = serviceProvider.GetRequiredService<IProviderConfigurationService>();
+        var providerConfig = await providerConfigurationService.GetConfigurationAsync(claim.ProviderId, ct);
+        var context = BuildAgentContext(claim, providerConfig, persistedOutputs);
         var humanReviewAgent = serviceProvider.GetRequiredService<HumanReviewAgent>();
         var humanReviewResult = await humanReviewAgent.InvokeAsync(context, new HumanReviewInput(reason), ct);
         DisposeContextJson(context);
@@ -489,7 +501,73 @@ public sealed class ClaimPipelineOrchestrator : BackgroundService
         claim.Status = "MANUAL_REVIEW";
         claim.UpdatedAt = DateTime.UtcNow;
 
+        AddLifecycleNotificationEvent(
+            dbContext,
+            claim,
+            "MANUAL_REVIEW_ROUTED",
+            "Claim has been routed for manual adjuster review.",
+            claim.Status);
+
         await dbContext.SaveChangesAsync(ct);
+    }
+
+    private static bool TryGetBlockingMissingItems(string? serializedOutput, out List<string> blockingItems)
+    {
+        blockingItems = [];
+        if (string.IsNullOrWhiteSpace(serializedOutput))
+        {
+            return false;
+        }
+
+        using var document = JsonDocument.Parse(serializedOutput);
+        if (!document.RootElement.TryGetProperty("BlockingMissingFields", out var blockingElement) &&
+            !document.RootElement.TryGetProperty("blockingMissingFields", out blockingElement))
+        {
+            return false;
+        }
+
+        if (blockingElement.ValueKind != JsonValueKind.Array)
+        {
+            return false;
+        }
+
+        blockingItems = blockingElement
+            .EnumerateArray()
+            .Where(x => x.ValueKind == JsonValueKind.String)
+            .Select(x => x.GetString())
+            .Where(x => !string.IsNullOrWhiteSpace(x))
+            .Select(x => x!)
+            .ToList();
+
+        return true;
+    }
+
+    private static void AddLifecycleNotificationEvent(
+        ClaimSettlementDbContext dbContext,
+        Claim claim,
+        string eventType,
+        string message,
+        string claimStatus,
+        DateTime? responseDeadlineUtc = null,
+        IReadOnlyList<string>? missingItems = null)
+    {
+        dbContext.AgentOutputs.Add(new AgentOutput
+        {
+            OutputId = Guid.NewGuid(),
+            ClaimId = claim.ClaimId,
+            AgentId = "NotificationLifecycle",
+            OutputPayload = JsonSerializer.Serialize(new
+            {
+                notificationEventType = eventType,
+                message,
+                claimStatus,
+                responseDeadlineUtc,
+                missingItems = missingItems ?? Array.Empty<string>(),
+                eventTimestampUtc = DateTime.UtcNow
+            }),
+            CreatedAt = DateTime.UtcNow,
+            SchemaVersion = "1.0"
+        });
     }
 
     private sealed record PipelineStep(

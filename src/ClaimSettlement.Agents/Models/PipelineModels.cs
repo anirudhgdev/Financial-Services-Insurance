@@ -24,6 +24,48 @@ public sealed record ClaimPipelineInput(Claim ClaimRecord);
 
 public sealed record HumanReviewInput(string Reason);
 
+public sealed class NotificationInput
+{
+    public Guid ClaimId { get; init; }
+
+    public string ProviderId { get; init; } = string.Empty;
+
+    public string EventType { get; init; } = string.Empty;
+
+    public string Message { get; init; } = string.Empty;
+
+    public DateTime EventTimestampUtc { get; init; } = DateTime.UtcNow;
+
+    public string? RecipientUserId { get; init; }
+
+    public string? RecipientEmail { get; init; }
+
+    public string? RecipientPhone { get; init; }
+
+    public DateTime? ResponseDeadlineUtc { get; init; }
+
+    public IReadOnlyList<string> MissingItems { get; init; } = Array.Empty<string>();
+}
+
+public sealed class NotificationResult
+{
+    public string MessageId { get; init; } = string.Empty;
+
+    public string EventType { get; init; } = string.Empty;
+
+    public IReadOnlyList<string> Channels { get; init; } = Array.Empty<string>();
+
+    public bool Delivered { get; init; }
+
+    public bool DuplicateSuppressed { get; init; }
+
+    public bool ServiceUnavailable { get; init; }
+
+    public string? FailureReason { get; init; }
+
+    public DateTime DeliveredAtUtc { get; init; }
+}
+
 public sealed class DocumentAnalysisResult
 {
     public string Summary { get; init; } = string.Empty;

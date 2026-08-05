@@ -93,7 +93,9 @@ public sealed class HumanReviewSlaTrackerService : BackgroundService
                 {
                     eventType = "SLA_BREACHED",
                     updatedAtUtc = now,
-                    status = "SLA_BREACHED"
+                    status = "SLA_BREACHED",
+                    notificationEventType = "SLA_DELAY",
+                    message = "Claim processing is delayed due to pending manual review assignment."
                 }),
                 CreatedAt = now,
                 SchemaVersion = "1.0"

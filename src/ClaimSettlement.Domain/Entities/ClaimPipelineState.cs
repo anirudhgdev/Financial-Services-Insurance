@@ -14,6 +14,8 @@ public sealed class ClaimPipelineState : IProviderScoped
 
     public string AgentOutputs { get; set; } = "{}";
 
+    public string ProviderConfigSnapshot { get; set; } = "{}";
+
     public string Status { get; set; } = string.Empty;
 
     public DateTime StartedAt { get; set; }

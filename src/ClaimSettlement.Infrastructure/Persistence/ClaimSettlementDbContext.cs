@@ -72,6 +72,7 @@ public sealed class ClaimSettlementDbContext : DbContext
             entity.Property(x => x.CurrentStep).HasMaxLength(64).IsRequired();
             entity.Property(x => x.CompletedSteps).HasColumnType("nvarchar(max)").IsRequired();
             entity.Property(x => x.AgentOutputs).HasColumnType("nvarchar(max)").IsRequired();
+            entity.Property(x => x.ProviderConfigSnapshot).HasColumnType("nvarchar(max)").IsRequired();
             entity.Property(x => x.Status).HasMaxLength(64).IsRequired();
             entity.Property(x => x.StartedAt).HasDefaultValueSql("SYSUTCDATETIME()");
 
@@ -84,6 +85,7 @@ public sealed class ClaimSettlementDbContext : DbContext
             {
                 table.HasCheckConstraint("CK_ClaimPipelineState_CompletedSteps_IsJson", "ISJSON([CompletedSteps]) = 1");
                 table.HasCheckConstraint("CK_ClaimPipelineState_AgentOutputs_IsJson", "ISJSON([AgentOutputs]) = 1");
+                table.HasCheckConstraint("CK_ClaimPipelineState_ProviderConfigSnapshot_IsJson", "ISJSON([ProviderConfigSnapshot]) = 1");
             });
 
             entity.HasIndex(x => new { x.ProviderId, x.Status });

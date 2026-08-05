@@ -11,6 +11,8 @@ builder.Services.AddScoped<ClaimSettlement.Agents.Pipeline.IHumanReviewQueueStor
 builder.Services.Configure<OrchestratorOptions>(builder.Configuration.GetSection(OrchestratorOptions.SectionName));
 builder.Services.AddHostedService<ClaimPipelineOrchestrator>();
 builder.Services.AddHostedService<HumanReviewSlaTrackerService>();
+builder.Services.AddHostedService<NotificationOutboxDispatcherService>();
+builder.Services.AddHostedService<InformationRequestReminderService>();
 
 var host = builder.Build();
 host.Run();

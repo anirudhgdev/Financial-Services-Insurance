@@ -97,23 +97,23 @@
 
 ## 11. Notification Agent
 
-- [ ] 11.1 Implement `NotificationAgent` as an MAF agent that accepts typed notification events and calls the Notification Service MCP tool
-- [ ] 11.2 Implement at-least-once delivery with idempotent message ID generation (claim ID + event type + timestamp hash)
-- [ ] 11.3 Implement retry-with-exponential-backoff (3 attempts) and dead-letter queue logging for failed deliveries
-- [ ] 11.4 Implement customer communication preference lookup and channel filtering (email-only, SMS-only, or both)
-- [ ] 11.5 Implement all lifecycle event notification triggers: intake confirmation, processing milestones, decision, human-review assignment, SLA delay, information requests with deadline
-- [ ] 11.6 Implement information-request reminder job: 24 hours before deadline, send reminder; after deadline, escalate to `INFO_TIMEOUT`
-- [ ] 11.7 Write unit tests for duplicate prevention, delivery retry, preference filtering, and deadline tracking
+- [x] 11.1 Implement `NotificationAgent` as an MAF agent that accepts typed notification events and calls the Notification Service MCP tool
+- [x] 11.2 Implement at-least-once delivery with idempotent message ID generation (claim ID + event type + timestamp hash)
+- [x] 11.3 Implement retry-with-exponential-backoff (3 attempts) and dead-letter queue logging for failed deliveries
+- [x] 11.4 Implement customer communication preference lookup and channel filtering (email-only, SMS-only, or both)
+- [x] 11.5 Implement all lifecycle event notification triggers: intake confirmation, processing milestones, decision, human-review assignment, SLA delay, information requests with deadline
+- [x] 11.6 Implement information-request reminder job: 24 hours before deadline, send reminder; after deadline, escalate to `INFO_TIMEOUT`
+- [x] 11.7 Write unit tests for duplicate prevention, delivery retry, preference filtering, and deadline tracking
 
 ## 12. Configurable Workflows
 
-- [ ] 12.1 Implement `ProviderConfigurationService` with a 5-minute cache (using `IMemoryCache`) on top of Azure SQL reads
-- [ ] 12.2 Implement `GET /api/v1/providers/{providerId}/config` and `PUT /api/v1/providers/{providerId}/config` REST endpoints with `ProviderAdmin` role enforcement
-- [ ] 12.3 Implement threshold validation on PUT: reject fraud threshold outside [0.30, 0.90] with 400 Bad Request
-- [ ] 12.4 Implement supported claim-type and mandatory-field enforcement in the Claim Intake Agent
-- [ ] 12.5 Implement `always_manual` routing override in the Settlement Decision Agent
-- [ ] 12.6 Inject provider configuration snapshot into `ClaimAgentContext` at pipeline start; persist snapshot in `ClaimPipelineState`
-- [ ] 12.7 Write unit tests for threshold validation, claim-type enforcement, and routing overrides
+- [x] 12.1 Implement `ProviderConfigurationService` with a 5-minute cache (using `IMemoryCache`) on top of Azure SQL reads
+- [x] 12.2 Implement `GET /api/v1/providers/{providerId}/config` and `PUT /api/v1/providers/{providerId}/config` REST endpoints with `ProviderAdmin` role enforcement
+- [x] 12.3 Implement threshold validation on PUT: reject fraud threshold outside [0.30, 0.90] with 400 Bad Request
+- [x] 12.4 Implement supported claim-type and mandatory-field enforcement in the Claim Intake Agent
+- [x] 12.5 Implement `always_manual` routing override in the Settlement Decision Agent
+- [x] 12.6 Inject provider configuration snapshot into `ClaimAgentContext` at pipeline start; persist snapshot in `ClaimPipelineState`
+- [x] 12.7 Write unit tests for threshold validation, claim-type enforcement, and routing overrides
 
 ## 13. Audit & Observability
 

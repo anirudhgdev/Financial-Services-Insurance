@@ -20,6 +20,12 @@ public static class ServiceCollectionExtensions
         services.AddScoped<IHumanReviewQueueStore, InMemoryHumanReviewQueueStore>();
         services.AddScoped<IReviewPackageAssembler, ReviewPackageAssembler>();
         services.AddSingleton<IHumanReviewSlaEvaluator, HumanReviewSlaEvaluator>();
+        services.AddScoped<INotificationServiceClient, SimulatedNotificationServiceClient>();
+        services.AddSingleton<INotificationIdGenerator, HashNotificationIdGenerator>();
+        services.AddSingleton<INotificationDedupStore, InMemoryNotificationDedupStore>();
+        services.AddScoped<INotificationPreferenceService, NotificationPreferenceService>();
+        services.AddSingleton<IDeadLetterNotificationSink, InMemoryDeadLetterNotificationSink>();
+        services.AddSingleton<INotificationEventFactory, NotificationEventFactory>();
 
         services.AddScoped<ClaimIntakeAgent>();
         services.AddScoped<DocumentAnalysisAgent>();
@@ -27,6 +33,7 @@ public static class ServiceCollectionExtensions
         services.AddScoped<FraudDetectionAgent>();
         services.AddScoped<SettlementDecisionAgent>();
         services.AddScoped<HumanReviewAgent>();
+        services.AddScoped<NotificationAgent>();
 
         return services;
     }
