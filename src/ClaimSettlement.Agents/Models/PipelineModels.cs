@@ -31,6 +31,31 @@ public sealed class DocumentAnalysisResult
     public decimal Confidence { get; init; }
 
     public IReadOnlyList<string> MissingFields { get; init; } = Array.Empty<string>();
+
+    public IReadOnlyList<string> BlockingMissingFields { get; init; } = Array.Empty<string>();
+
+    public IReadOnlyList<string> NonBlockingMissingFields { get; init; } = Array.Empty<string>();
+
+    public IReadOnlyList<string> DuplicateDocumentIds { get; init; } = Array.Empty<string>();
+
+    public IReadOnlyList<DocumentExtractionResult> Documents { get; init; } = Array.Empty<DocumentExtractionResult>();
+
+    public bool NotificationRequired { get; init; }
+
+    public string? NotificationEventType { get; init; }
+}
+
+public sealed class DocumentExtractionResult
+{
+    public string DocumentId { get; init; } = string.Empty;
+
+    public string Status { get; init; } = "EXTRACTED";
+
+    public string RawExtractedText { get; init; } = string.Empty;
+
+    public decimal Confidence { get; init; }
+
+    public IReadOnlyDictionary<string, string> Fields { get; init; } = new Dictionary<string, string>();
 }
 
 public sealed class PolicyValidationResult

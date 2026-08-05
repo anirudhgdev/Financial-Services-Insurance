@@ -47,13 +47,13 @@
 
 ## 6. Document Analysis Agent
 
-- [ ] 6.1 Implement `DocumentAnalysisAgent` using Azure Document Intelligence to extract structured fields from each uploaded document
-- [ ] 6.2 Implement confidence threshold check (< 0.80 → `NEEDS_REVIEW`); persist raw extracted text and confidence scores
-- [ ] 6.3 Implement multi-document deduplication (> 90% textual overlap → `DUPLICATE` flag)
-- [ ] 6.4 Implement claim summarization using Azure OpenAI GPT-4o (100–300 word natural-language summary)
-- [ ] 6.5 Implement gap report generation: compare extracted fields to mandatory field set for the claim type; classify gaps as blocking or non-blocking
-- [ ] 6.6 Persist extraction results and gap report to `AgentOutput` table; trigger Notification Agent for blocking gaps
-- [ ] 6.7 Write unit tests for extraction, deduplication, summarization, and gap detection
+- [x] 6.1 Implement `DocumentAnalysisAgent` using Azure Document Intelligence to extract structured fields from each uploaded document
+- [x] 6.2 Implement confidence threshold check (< 0.80 → `NEEDS_REVIEW`); persist raw extracted text and confidence scores
+- [x] 6.3 Implement multi-document deduplication (> 90% textual overlap → `DUPLICATE` flag)
+- [x] 6.4 Implement claim summarization using Azure OpenAI GPT-4o (100–300 word natural-language summary)
+- [x] 6.5 Implement gap report generation: compare extracted fields to mandatory field set for the claim type; classify gaps as blocking or non-blocking
+- [x] 6.6 Persist extraction results and gap report to `AgentOutput` table; trigger Notification Agent for blocking gaps
+- [x] 6.7 Write unit tests for extraction, deduplication, summarization, and gap detection
 
 ## 7. Policy Validation Agent
 
