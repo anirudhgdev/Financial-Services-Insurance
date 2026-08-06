@@ -117,13 +117,13 @@
 
 ## 13. Audit & Observability
 
-- [ ] 13.1 Implement `AuditLogger` service: append-only writes to `AuditLog` table; throw on any update/delete attempt
-- [ ] 13.2 Integrate `AuditLogger` into all agents, orchestrator state transitions, API controllers (adjuster decisions, config changes), and auth middleware
-- [ ] 13.3 Implement `GET /api/v1/providers/{providerId}/audit-log` export endpoint: paginated JSON Lines download with SHA-256 file hash; `PlatformAdmin` role only
-- [ ] 13.4 Configure OpenTelemetry SDK: auto-instrument ASP.NET Core, HttpClient, EF Core; register custom `ActivitySource` for agents; export to Azure Monitor
-- [ ] 13.5 Implement all custom Application Insights metrics: claims per hour (by outcome), pipeline duration histogram, fraud score distribution, agent error rate, notification delivery rate
-- [ ] 13.6 Implement `/health/live` and `/health/ready` endpoints; readiness probe checks Azure SQL, Blob Storage, Azure OpenAI, Notification Service connectivity
-- [ ] 13.7 Write integration tests for audit log append-only enforcement and health endpoint responses
+- [x] 13.1 Implement `AuditLogger` service: append-only writes to `AuditLog` table; throw on any update/delete attempt
+- [x] 13.2 Integrate `AuditLogger` into all agents, orchestrator state transitions, API controllers (adjuster decisions, config changes), and auth middleware
+- [x] 13.3 Implement `GET /api/v1/providers/{providerId}/audit-log` export endpoint: paginated JSON Lines download with SHA-256 file hash; `PlatformAdmin` role only
+- [x] 13.4 Configure OpenTelemetry SDK: auto-instrument ASP.NET Core, HttpClient, EF Core; register custom `ActivitySource` for agents; export to Azure Monitor
+- [x] 13.5 Implement all custom Application Insights metrics: claims per hour (by outcome), pipeline duration histogram, fraud score distribution, agent error rate, notification delivery rate
+- [x] 13.6 Implement `/health/live` and `/health/ready` endpoints; readiness probe checks Azure SQL, Blob Storage, Azure OpenAI, Notification Service connectivity
+- [x] 13.7 Write integration tests for audit log append-only enforcement and health endpoint responses
 
 ## 14. MCP Server Adapters
 

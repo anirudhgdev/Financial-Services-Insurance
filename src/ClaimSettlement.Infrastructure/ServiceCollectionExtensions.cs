@@ -1,5 +1,6 @@
 using ClaimSettlement.Domain.Identity;
 using ClaimSettlement.Infrastructure.Azure;
+using ClaimSettlement.Infrastructure.Observability;
 using ClaimSettlement.Infrastructure.Persistence;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
@@ -25,6 +26,8 @@ public static class ServiceCollectionExtensions
 
         services.AddScoped(typeof(IRepository<>), typeof(EfRepository<>));
         services.AddScoped<IProviderConfigurationService, ProviderConfigurationService>();
+        services.AddScoped<IAuditLogger, AuditLogger>();
+        services.AddSingleton<IClaimMetrics, ClaimMetrics>();
 
         return services;
     }

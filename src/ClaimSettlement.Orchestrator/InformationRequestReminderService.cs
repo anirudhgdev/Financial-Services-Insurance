@@ -1,4 +1,5 @@
 using ClaimSettlement.Domain.Entities;
+using ClaimSettlement.Infrastructure.Observability;
 using ClaimSettlement.Infrastructure.Persistence;
 using Microsoft.EntityFrameworkCore;
 using System.Text.Json;
@@ -9,13 +10,19 @@ public sealed class InformationRequestReminderService : BackgroundService
 {
     private readonly IServiceScopeFactory _scopeFactory;
     private readonly ILogger<InformationRequestReminderService> _logger;
+    private readonly IAuditLogger _auditLogger;
+    private readonly IClaimMetrics _claimMetrics;
 
     public InformationRequestReminderService(
         IServiceScopeFactory scopeFactory,
-        ILogger<InformationRequestReminderService> logger)
+        ILogger<InformationRequestReminderService> logger,
+        IAuditLogger auditLogger,
+        IClaimMetrics claimMetrics)
     {
         _scopeFactory = scopeFactory;
         _logger = logger;
+        _auditLogger = auditLogger;
+        _claimMetrics = claimMetrics;
     }
 
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
@@ -114,6 +121,22 @@ public sealed class InformationRequestReminderService : BackgroundService
                 {
                     claim.Status = "INFO_TIMEOUT";
                     claim.UpdatedAt = now;
+                    _claimMetrics.RecordClaimOutcome(claim.Status);
+
+                    await _auditLogger.AppendAsync(new AuditLogEntry
+                    {
+                        ProviderId = claim.ProviderId,
+                        EventType = "INFO_TIMEOUT",
+                        ActorId = "info-reminder",
+                        ActorType = "System",
+                        ClaimId = claim.ClaimId,
+                        Payload = new
+                        {
+                            claim.Status,
+                            deadlineUtc,
+                            timedOutAtUtc = now
+                        }
+                    }, ct);
                 }
             }
         }

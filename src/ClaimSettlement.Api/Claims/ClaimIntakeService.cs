@@ -18,7 +18,7 @@ public sealed class ClaimIntakeService : IClaimIntakeService
     private readonly IClaimIntakeValidationService _validationService;
     private readonly IClaimDuplicateGuard _duplicateGuard;
     private readonly IDocumentUploadPolicy _documentUploadPolicy;
-    private readonly BlobServiceClient _blobServiceClient;
+    private readonly BlobServiceClient? _blobServiceClient;
     private readonly AzureStorageOptions _storageOptions;
     private readonly IProviderConfigurationService _providerConfigurationService;
 
@@ -28,9 +28,9 @@ public sealed class ClaimIntakeService : IClaimIntakeService
         IClaimIntakeValidationService validationService,
         IClaimDuplicateGuard duplicateGuard,
         IDocumentUploadPolicy documentUploadPolicy,
-        BlobServiceClient blobServiceClient,
         IOptions<AzureStorageOptions> storageOptions,
-        IProviderConfigurationService providerConfigurationService)
+        IProviderConfigurationService providerConfigurationService,
+        BlobServiceClient? blobServiceClient = null)
     {
         _memoryCache = memoryCache;
         _dbContext = dbContext;
@@ -208,7 +208,7 @@ public sealed class ClaimIntakeService : IClaimIntakeService
             throw new InvalidOperationException(validation.Error);
         }
 
-        var containerClient = _blobServiceClient.GetBlobContainerClient(_storageOptions.DocumentsContainerName);
+        var containerClient = GetRequiredBlobServiceClient().GetBlobContainerClient(_storageOptions.DocumentsContainerName);
         await containerClient.CreateIfNotExistsAsync(cancellationToken: ct);
 
         var safeName = Path.GetFileName(file.FileName);
@@ -304,7 +304,7 @@ public sealed class ClaimIntakeService : IClaimIntakeService
 
     private async Task<int> CountUploadedDocumentsAsync(string providerId, Guid claimId, CancellationToken ct)
     {
-        var containerClient = _blobServiceClient.GetBlobContainerClient(_storageOptions.DocumentsContainerName);
+        var containerClient = GetRequiredBlobServiceClient().GetBlobContainerClient(_storageOptions.DocumentsContainerName);
         var prefix = $"{providerId}/{claimId}/";
 
         var count = 0;
@@ -314,6 +314,12 @@ public sealed class ClaimIntakeService : IClaimIntakeService
         }
 
         return count;
+    }
+
+    private BlobServiceClient GetRequiredBlobServiceClient()
+    {
+        return _blobServiceClient
+            ?? throw new InvalidOperationException("Blob storage is not configured for this environment.");
     }
 
 }

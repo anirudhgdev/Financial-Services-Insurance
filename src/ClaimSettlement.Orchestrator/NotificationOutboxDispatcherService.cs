@@ -1,6 +1,7 @@
 using ClaimSettlement.Agents.Models;
 using ClaimSettlement.Agents.Pipeline;
 using ClaimSettlement.Domain.Entities;
+using ClaimSettlement.Infrastructure.Observability;
 using ClaimSettlement.Infrastructure.Persistence;
 using Microsoft.EntityFrameworkCore;
 using System.Security.Claims;
@@ -14,14 +15,20 @@ public sealed class NotificationOutboxDispatcherService : BackgroundService
 
     private readonly IServiceScopeFactory _scopeFactory;
     private readonly ILogger<NotificationOutboxDispatcherService> _logger;
+    private readonly IClaimMetrics _claimMetrics;
+    private readonly IAuditLogger _auditLogger;
     private DateTime _lastSeenUtc = DateTime.UtcNow.AddMinutes(-15);
 
     public NotificationOutboxDispatcherService(
         IServiceScopeFactory scopeFactory,
-        ILogger<NotificationOutboxDispatcherService> logger)
+        ILogger<NotificationOutboxDispatcherService> logger,
+        IClaimMetrics claimMetrics,
+        IAuditLogger auditLogger)
     {
         _scopeFactory = scopeFactory;
         _logger = logger;
+        _claimMetrics = claimMetrics;
+        _auditLogger = auditLogger;
     }
 
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
@@ -146,6 +153,25 @@ public sealed class NotificationOutboxDispatcherService : BackgroundService
                 CreatedAt = DateTime.UtcNow,
                 SchemaVersion = "1.0"
             });
+
+            _claimMetrics.RecordNotificationDelivery(envelope.EventType, notificationResult.Delivered);
+
+            await _auditLogger.AppendAsync(new AuditLogEntry
+            {
+                ProviderId = claim.ProviderId,
+                EventType = "NOTIFICATION_DISPATCHED",
+                ActorId = "notification-dispatcher",
+                ActorType = "System",
+                ClaimId = claim.ClaimId,
+                Payload = new
+                {
+                    envelope.EventType,
+                    notificationResult.Delivered,
+                    notificationResult.DuplicateSuppressed,
+                    notificationResult.ServiceUnavailable,
+                    notificationResult.FailureReason
+                }
+            }, ct);
 
             await dbContext.SaveChangesAsync(ct);
         }

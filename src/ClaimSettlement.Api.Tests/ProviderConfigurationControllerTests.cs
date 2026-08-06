@@ -1,6 +1,7 @@
 using ClaimSettlement.Api.Providers;
 using ClaimSettlement.Domain.Entities;
 using ClaimSettlement.Domain.Identity;
+using ClaimSettlement.Infrastructure.Observability;
 using ClaimSettlement.Infrastructure.Persistence;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -18,7 +19,11 @@ public sealed class ProviderConfigurationControllerTests
         using var memoryCache = BuildMemoryCache();
         var service = new ProviderConfigurationService(dbContext, memoryCache);
 
-        var controller = new ProvidersController(service, new TestProviderContextAccessor("provider-1"));
+        var controller = new ProvidersController(
+            service,
+            new TestProviderContextAccessor("provider-1"),
+            dbContext,
+            new NoOpAuditLogger());
 
         var response = await controller.UpdateConfiguration(
             "provider-1",
@@ -51,7 +56,11 @@ public sealed class ProviderConfigurationControllerTests
         using var memoryCache = BuildMemoryCache();
         var service = new ProviderConfigurationService(dbContext, memoryCache);
 
-        var controller = new ProvidersController(service, new TestProviderContextAccessor("provider-1"));
+        var controller = new ProvidersController(
+            service,
+            new TestProviderContextAccessor("provider-1"),
+            dbContext,
+            new NoOpAuditLogger());
 
         var update = await controller.UpdateConfiguration(
             "provider-1",
@@ -122,5 +131,16 @@ public sealed class ProviderConfigurationControllerTests
         public System.Security.Claims.ClaimsIdentity Identity => new("test");
 
         public bool IsAuthenticated => true;
+    }
+
+    private sealed class NoOpAuditLogger : IAuditLogger
+    {
+        public Task AppendAsync(AuditLogEntry entry, CancellationToken ct) => Task.CompletedTask;
+
+        public Task UpdateAsync(Guid entryId, object payload, CancellationToken ct)
+            => throw new InvalidOperationException();
+
+        public Task DeleteAsync(Guid entryId, CancellationToken ct)
+            => throw new InvalidOperationException();
     }
 }

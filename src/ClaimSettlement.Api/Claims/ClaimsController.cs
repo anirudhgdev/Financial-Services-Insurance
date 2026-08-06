@@ -1,6 +1,7 @@
 using ClaimSettlement.Api.Authorization;
 using ClaimSettlement.Domain.Entities;
 using ClaimSettlement.Domain.Identity;
+using ClaimSettlement.Infrastructure.Observability;
 using ClaimSettlement.Infrastructure.Persistence;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.EntityFrameworkCore;
@@ -13,15 +14,21 @@ public sealed class ClaimsController : Controllers.BaseApiController
     private readonly IClaimIntakeService _claimIntakeService;
     private readonly IProviderContextAccessor _providerContextAccessor;
     private readonly ClaimSettlementDbContext _dbContext;
+    private readonly IAuditLogger _auditLogger;
+    private readonly IClaimMetrics _claimMetrics;
 
     public ClaimsController(
         IClaimIntakeService claimIntakeService,
         IProviderContextAccessor providerContextAccessor,
-        ClaimSettlementDbContext dbContext)
+        ClaimSettlementDbContext dbContext,
+        IAuditLogger auditLogger,
+        IClaimMetrics claimMetrics)
     {
         _claimIntakeService = claimIntakeService;
         _providerContextAccessor = providerContextAccessor;
         _dbContext = dbContext;
+        _auditLogger = auditLogger;
+        _claimMetrics = claimMetrics;
     }
 
     [HttpPost("intake/conversation")]
@@ -36,6 +43,21 @@ public sealed class ClaimsController : Controllers.BaseApiController
             _providerContextAccessor.ProviderId,
             _providerContextAccessor.UserId,
             ct);
+
+        await _auditLogger.AppendAsync(new AuditLogEntry
+        {
+            ProviderId = _providerContextAccessor.ProviderId,
+            EventType = "CLAIM_INTAKE_CONVERSATION",
+            ActorId = _providerContextAccessor.UserId,
+            ActorType = "Customer",
+            ClaimId = response.ClaimId,
+            Payload = new
+            {
+                response.SessionId,
+                response.IsReadyForSubmission,
+                missingFields = response.MissingFields.Select(x => x.FieldName)
+            }
+        }, ct);
 
         return Ok(response);
     }
@@ -53,6 +75,27 @@ public sealed class ClaimsController : Controllers.BaseApiController
             _providerContextAccessor.ProviderId,
             _providerContextAccessor.UserId,
             ct);
+
+        await _auditLogger.AppendAsync(new AuditLogEntry
+        {
+            ProviderId = _providerContextAccessor.ProviderId,
+            EventType = "CLAIM_INTAKE_COMPLETED",
+            ActorId = _providerContextAccessor.UserId,
+            ActorType = "Customer",
+            ClaimId = response.ClaimId,
+            Payload = new
+            {
+                response.Created,
+                response.Message,
+                response.RequiresDuplicateConfirmation,
+                response.ExistingClaimId
+            }
+        }, ct);
+
+        if (response.Created)
+        {
+            _claimMetrics.RecordClaimOutcome("INTAKE_COMPLETE");
+        }
 
         if (!response.Created)
         {
@@ -79,6 +122,21 @@ public sealed class ClaimsController : Controllers.BaseApiController
                 file,
                 _providerContextAccessor.ProviderId,
                 ct);
+
+            await _auditLogger.AppendAsync(new AuditLogEntry
+            {
+                ProviderId = _providerContextAccessor.ProviderId,
+                EventType = "DOCUMENT_UPLOADED",
+                ActorId = _providerContextAccessor.UserId,
+                ActorType = "Customer",
+                ClaimId = claimId,
+                Payload = new
+                {
+                    response.BlobPath,
+                    response.ContentType,
+                    response.SizeBytes
+                }
+            }, ct);
 
             return Ok(response);
         }
@@ -169,6 +227,25 @@ public sealed class ClaimsController : Controllers.BaseApiController
         });
 
         await _dbContext.SaveChangesAsync(ct);
+
+        await _auditLogger.AppendAsync(new AuditLogEntry
+        {
+            ProviderId = claim.ProviderId,
+            EventType = "ADJUSTER_DECISION_SUBMITTED",
+            ActorId = _providerContextAccessor.UserId,
+            ActorType = "Adjuster",
+            ClaimId = claim.ClaimId,
+            Payload = new
+            {
+                decision,
+                rationale = assignment.Rationale,
+                assignment.SettlementOverride,
+                claim.Status,
+                decidedAtUtc = now
+            }
+        }, ct);
+
+        _claimMetrics.RecordClaimOutcome(claim.Status);
 
         return Ok(new AdjusterDecisionResponse
         {

@@ -1,8 +1,13 @@
 using ClaimSettlement.Api.Authorization;
 using ClaimSettlement.Domain.Identity;
+using ClaimSettlement.Infrastructure.Observability;
 using ClaimSettlement.Infrastructure.Persistence;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
+using System.Security.Cryptography;
+using System.Text;
+using System.Text.Json;
 
 namespace ClaimSettlement.Api.Providers;
 
@@ -10,13 +15,19 @@ public sealed class ProvidersController : Controllers.BaseApiController
 {
     private readonly IProviderConfigurationService _providerConfigurationService;
     private readonly IProviderContextAccessor _providerContextAccessor;
+    private readonly ClaimSettlementDbContext _dbContext;
+    private readonly IAuditLogger _auditLogger;
 
     public ProvidersController(
         IProviderConfigurationService providerConfigurationService,
-        IProviderContextAccessor providerContextAccessor)
+        IProviderContextAccessor providerContextAccessor,
+        ClaimSettlementDbContext dbContext,
+        IAuditLogger auditLogger)
     {
         _providerConfigurationService = providerConfigurationService;
         _providerContextAccessor = providerContextAccessor;
+        _dbContext = dbContext;
+        _auditLogger = auditLogger;
     }
 
     [HttpGet("{providerId}/config")]
@@ -77,7 +88,77 @@ public sealed class ProvidersController : Controllers.BaseApiController
             },
             ct);
 
+        await _auditLogger.AppendAsync(new AuditLogEntry
+        {
+            ProviderId = providerId,
+            EventType = "PROVIDER_CONFIGURATION_UPDATED",
+            ActorId = _providerContextAccessor.UserId,
+            ActorType = "ProviderAdmin",
+            Payload = new
+            {
+                request.ManualReviewFraudThreshold,
+                request.ManualReviewClaimAmountThreshold,
+                request.PipelineConcurrencyLimit,
+                request.IsActive
+            }
+        }, ct);
+
         return Ok(ToResponse(saved));
+    }
+
+    [HttpGet("{providerId}/audit-log")]
+    [Authorize(Policy = AuthorizationPolicies.PlatformAdmin)]
+    [Produces("application/x-ndjson")]
+    public async Task<IActionResult> ExportAuditLog(
+        [FromRoute] string providerId,
+        [FromQuery] int page = 1,
+        [FromQuery] int pageSize = 200,
+        CancellationToken ct = default)
+    {
+        if (page < 1)
+        {
+            return BadRequest(new { error = "Page must be greater than or equal to 1." });
+        }
+
+        if (pageSize is < 1 or > 1000)
+        {
+            return BadRequest(new { error = "PageSize must be between 1 and 1000." });
+        }
+
+        var entries = await _dbContext.AuditLogs
+            .AsNoTracking()
+            .Where(x => x.ProviderId == providerId)
+            .OrderBy(x => x.Timestamp)
+            .Skip((page - 1) * pageSize)
+            .Take(pageSize)
+            .ToListAsync(ct);
+
+        var lines = entries.Select(entry => JsonSerializer.Serialize(new
+        {
+            entry.EntryId,
+            entry.ClaimId,
+            entry.ProviderId,
+            entry.EventType,
+            entry.ActorId,
+            entry.ActorType,
+            entry.Payload,
+            entry.Timestamp
+        }));
+
+        var content = string.Join('\n', lines);
+        if (content.Length > 0)
+        {
+            content += "\n";
+        }
+
+        var bytes = Encoding.UTF8.GetBytes(content);
+        var sha256 = Convert.ToHexString(SHA256.HashData(bytes)).ToLowerInvariant();
+
+        Response.Headers["X-Content-SHA256"] = sha256;
+        Response.Headers["X-Audit-Page"] = page.ToString(System.Globalization.CultureInfo.InvariantCulture);
+        Response.Headers["X-Audit-Page-Size"] = pageSize.ToString(System.Globalization.CultureInfo.InvariantCulture);
+
+        return File(bytes, "application/x-ndjson", $"audit-{providerId}-p{page}.jsonl");
     }
 
     private bool CanManageProvider(string providerId)

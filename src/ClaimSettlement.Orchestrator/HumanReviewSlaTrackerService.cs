@@ -1,4 +1,5 @@
 using ClaimSettlement.Agents.Pipeline;
+using ClaimSettlement.Infrastructure.Observability;
 using ClaimSettlement.Infrastructure.Persistence;
 using Microsoft.EntityFrameworkCore;
 
@@ -8,11 +9,19 @@ public sealed class HumanReviewSlaTrackerService : BackgroundService
 {
     private readonly IServiceScopeFactory _scopeFactory;
     private readonly ILogger<HumanReviewSlaTrackerService> _logger;
+    private readonly IAuditLogger _auditLogger;
+    private readonly IClaimMetrics _claimMetrics;
 
-    public HumanReviewSlaTrackerService(IServiceScopeFactory scopeFactory, ILogger<HumanReviewSlaTrackerService> logger)
+    public HumanReviewSlaTrackerService(
+        IServiceScopeFactory scopeFactory,
+        ILogger<HumanReviewSlaTrackerService> logger,
+        IAuditLogger auditLogger,
+        IClaimMetrics claimMetrics)
     {
         _scopeFactory = scopeFactory;
         _logger = logger;
+        _auditLogger = auditLogger;
+        _claimMetrics = claimMetrics;
     }
 
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
@@ -83,6 +92,7 @@ public sealed class HumanReviewSlaTrackerService : BackgroundService
         {
             claim.Status = "SLA_BREACHED";
             claim.UpdatedAt = now;
+            _claimMetrics.RecordClaimOutcome(claim.Status);
 
             dbContext.AgentOutputs.Add(new ClaimSettlement.Domain.Entities.AgentOutput
             {
@@ -100,6 +110,20 @@ public sealed class HumanReviewSlaTrackerService : BackgroundService
                 CreatedAt = now,
                 SchemaVersion = "1.0"
             });
+
+            await _auditLogger.AppendAsync(new AuditLogEntry
+            {
+                ProviderId = claim.ProviderId,
+                EventType = "SLA_BREACHED",
+                ActorId = "sla-tracker",
+                ActorType = "System",
+                ClaimId = claim.ClaimId,
+                Payload = new
+                {
+                    claim.Status,
+                    breachedAtUtc = now
+                }
+            }, ct);
         }
 
         await dbContext.SaveChangesAsync(ct);

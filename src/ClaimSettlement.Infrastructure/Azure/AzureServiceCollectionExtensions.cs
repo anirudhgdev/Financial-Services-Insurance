@@ -22,37 +22,57 @@ public static class AzureServiceCollectionExtensions
         var credential = new DefaultAzureCredential();
 
         var openAiOptions = configuration.GetSection(AzureOpenAIOptions.SectionName).Get<AzureOpenAIOptions>();
-        if (openAiOptions is not null && !string.IsNullOrEmpty(openAiOptions.Endpoint))
+        if (openAiOptions is not null &&
+            TryBuildServiceUri(openAiOptions.Endpoint, out var openAiEndpointUri))
         {
             services.AddSingleton(_ => new AzureOpenAIClient(
-                new Uri(openAiOptions.Endpoint),
+                openAiEndpointUri,
                 credential));
         }
 
         var searchOptions = configuration.GetSection(AzureSearchOptions.SectionName).Get<AzureSearchOptions>();
-        if (searchOptions is not null && !string.IsNullOrEmpty(searchOptions.Endpoint))
+        if (searchOptions is not null &&
+            TryBuildServiceUri(searchOptions.Endpoint, out var searchEndpointUri))
         {
             services.AddSingleton(_ => new SearchIndexClient(
-                new Uri(searchOptions.Endpoint),
+                searchEndpointUri,
                 credential));
 
             if (!string.IsNullOrEmpty(searchOptions.IndexName))
             {
                 services.AddSingleton(serviceProvider => new SearchClient(
-                    new Uri(searchOptions.Endpoint),
+                    searchEndpointUri,
                     searchOptions.IndexName,
                     credential));
             }
         }
 
         var storageOptions = configuration.GetSection(AzureStorageOptions.SectionName).Get<AzureStorageOptions>();
-        if (storageOptions is not null && !string.IsNullOrEmpty(storageOptions.BlobServiceUri))
+        if (storageOptions is not null &&
+            TryBuildServiceUri(storageOptions.BlobServiceUri, out var blobServiceUri))
         {
             services.AddSingleton(_ => new BlobServiceClient(
-                new Uri(storageOptions.BlobServiceUri),
+                blobServiceUri,
                 credential));
         }
 
         return services;
+    }
+
+    private static bool TryBuildServiceUri(string? rawEndpoint, out Uri uri)
+    {
+        uri = null!;
+        if (string.IsNullOrWhiteSpace(rawEndpoint) || rawEndpoint.Contains('<'))
+        {
+            return false;
+        }
+
+        if (!Uri.TryCreate(rawEndpoint, UriKind.Absolute, out var parsedUri))
+        {
+            return false;
+        }
+
+        uri = parsedUri;
+        return true;
     }
 }

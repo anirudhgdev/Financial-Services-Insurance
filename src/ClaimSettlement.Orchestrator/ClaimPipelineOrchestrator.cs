@@ -1,6 +1,7 @@
 using ClaimSettlement.Agents.Models;
 using ClaimSettlement.Agents.Pipeline;
 using ClaimSettlement.Domain.Entities;
+using ClaimSettlement.Infrastructure.Observability;
 using ClaimSettlement.Infrastructure.Persistence;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Options;
@@ -14,12 +15,14 @@ namespace ClaimSettlement.Orchestrator;
 
 public sealed class ClaimPipelineOrchestrator : BackgroundService
 {
-    private static readonly ActivitySource ActivitySource = new("ClaimSettlement.Orchestrator");
+    private static readonly ActivitySource ActivitySource = new(ClaimTelemetry.ActivitySourceName);
     private static readonly JsonSerializerOptions SerializerOptions = new(JsonSerializerDefaults.Web);
 
     private readonly IServiceScopeFactory _scopeFactory;
     private readonly ILogger<ClaimPipelineOrchestrator> _logger;
     private readonly OrchestratorOptions _options;
+    private readonly IClaimMetrics _claimMetrics;
+    private readonly IAuditLogger _auditLogger;
     private readonly ConcurrentDictionary<string, ProviderDispatchQueue> _providerQueues = new(StringComparer.OrdinalIgnoreCase);
     private readonly ConcurrentDictionary<Guid, byte> _queuedOrRunningClaims = new();
 
@@ -62,11 +65,15 @@ public sealed class ClaimPipelineOrchestrator : BackgroundService
     public ClaimPipelineOrchestrator(
         IServiceScopeFactory scopeFactory,
         IOptions<OrchestratorOptions> options,
-        ILogger<ClaimPipelineOrchestrator> logger)
+        ILogger<ClaimPipelineOrchestrator> logger,
+        IClaimMetrics claimMetrics,
+        IAuditLogger auditLogger)
     {
         _scopeFactory = scopeFactory;
         _logger = logger;
         _options = options.Value;
+        _claimMetrics = claimMetrics;
+        _auditLogger = auditLogger;
     }
 
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
@@ -178,6 +185,21 @@ public sealed class ClaimPipelineOrchestrator : BackgroundService
             claim.Status = "PIPELINE_IN_PROGRESS";
             claim.UpdatedAt = DateTime.UtcNow;
             pipelineState.Status = "PIPELINE_IN_PROGRESS";
+
+            await _auditLogger.AppendAsync(new AuditLogEntry
+            {
+                ProviderId = claim.ProviderId,
+                EventType = "PIPELINE_STARTED",
+                ActorId = "orchestrator-system",
+                ActorType = "System",
+                ClaimId = claim.ClaimId,
+                Payload = new
+                {
+                    claim.Status,
+                    startedAtUtc = DateTime.UtcNow
+                }
+            }, ct);
+
             AddLifecycleNotificationEvent(
                 dbContext,
                 claim,
@@ -202,6 +224,21 @@ public sealed class ClaimPipelineOrchestrator : BackgroundService
 
                 if (!invocationResult.Success || invocationResult.SerializedOutput is null)
                 {
+                    _claimMetrics.RecordAgentExecution(step.Name, success: false);
+                    await _auditLogger.AppendAsync(new AuditLogEntry
+                    {
+                        ProviderId = claim.ProviderId,
+                        EventType = "AGENT_STEP_FAILED",
+                        ActorId = "orchestrator-system",
+                        ActorType = "System",
+                        ClaimId = claim.ClaimId,
+                        Payload = new
+                        {
+                            step = step.Name,
+                            reason = invocationResult.FailureReason
+                        }
+                    }, ct);
+
                     await RouteToHumanReviewAsync(
                         scope.ServiceProvider,
                         dbContext,
@@ -212,6 +249,28 @@ public sealed class ClaimPipelineOrchestrator : BackgroundService
                         invocationResult.FailureReason ?? $"{step.Name} failed after retries.",
                         ct);
                     return;
+                }
+
+                _claimMetrics.RecordAgentExecution(step.Name, success: true);
+                await _auditLogger.AppendAsync(new AuditLogEntry
+                {
+                    ProviderId = claim.ProviderId,
+                    EventType = "AGENT_STEP_COMPLETED",
+                    ActorId = "orchestrator-system",
+                    ActorType = "System",
+                    ClaimId = claim.ClaimId,
+                    Payload = new
+                    {
+                        step = step.Name,
+                        recommendation = invocationResult.Recommendation,
+                        completedAtUtc = DateTime.UtcNow
+                    }
+                }, ct);
+
+                if (string.Equals(step.Name, "FraudDetectionAgent", StringComparison.Ordinal) &&
+                    TryReadFraudScore(invocationResult.SerializedOutput, out var fraudScore))
+                {
+                    _claimMetrics.RecordFraudScore(fraudScore);
                 }
 
                 completedSteps.Add(step.Name);
@@ -286,6 +345,25 @@ public sealed class ClaimPipelineOrchestrator : BackgroundService
             pipelineState.CompletedAt = DateTime.UtcNow;
             claim.Status = "PIPELINE_COMPLETE";
             claim.UpdatedAt = DateTime.UtcNow;
+
+            _claimMetrics.RecordClaimOutcome(claim.Status);
+            _claimMetrics.RecordPipelineDuration(pipelineState.CompletedAt.Value - pipelineState.StartedAt, claim.Status);
+
+            await _auditLogger.AppendAsync(new AuditLogEntry
+            {
+                ProviderId = claim.ProviderId,
+                EventType = "PIPELINE_COMPLETED",
+                ActorId = "orchestrator-system",
+                ActorType = "System",
+                ClaimId = claim.ClaimId,
+                Payload = new
+                {
+                    claim.Status,
+                    pipelineState.StartedAt,
+                    pipelineState.CompletedAt
+                }
+            }, ct);
+
             AddLifecycleNotificationEvent(
                 dbContext,
                 claim,
@@ -501,6 +579,23 @@ public sealed class ClaimPipelineOrchestrator : BackgroundService
         claim.Status = "MANUAL_REVIEW";
         claim.UpdatedAt = DateTime.UtcNow;
 
+        _claimMetrics.RecordClaimOutcome(claim.Status);
+
+        await _auditLogger.AppendAsync(new AuditLogEntry
+        {
+            ProviderId = claim.ProviderId,
+            EventType = "MANUAL_REVIEW_ROUTED",
+            ActorId = "orchestrator-system",
+            ActorType = "System",
+            ClaimId = claim.ClaimId,
+            Payload = new
+            {
+                reason,
+                status = claim.Status,
+                queuedAtUtc = DateTime.UtcNow
+            }
+        }, ct);
+
         AddLifecycleNotificationEvent(
             dbContext,
             claim,
@@ -538,6 +633,25 @@ public sealed class ClaimPipelineOrchestrator : BackgroundService
             .Where(x => !string.IsNullOrWhiteSpace(x))
             .Select(x => x!)
             .ToList();
+
+        return true;
+    }
+
+    private static bool TryReadFraudScore(string serializedOutput, out decimal score)
+    {
+        score = 0m;
+
+        using var document = JsonDocument.Parse(serializedOutput);
+        if (!document.RootElement.TryGetProperty("RiskScore", out var scoreElement) &&
+            !document.RootElement.TryGetProperty("riskScore", out scoreElement))
+        {
+            return false;
+        }
+
+        if (scoreElement.ValueKind != JsonValueKind.Number || !scoreElement.TryGetDecimal(out score))
+        {
+            return false;
+        }
 
         return true;
     }

@@ -1,6 +1,7 @@
 using ClaimSettlement.Api.Claims;
 using ClaimSettlement.Domain.Entities;
 using ClaimSettlement.Domain.Identity;
+using ClaimSettlement.Infrastructure.Observability;
 using ClaimSettlement.Infrastructure.Persistence;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
@@ -83,7 +84,9 @@ public sealed class AdjusterDecisionTests
         return new ClaimsController(
             new NoOpClaimIntakeService(),
             new TestProviderContextAccessor(),
-            dbContext);
+            dbContext,
+            new NoOpAuditLogger(),
+            new NoOpClaimMetrics());
     }
 
     private static ClaimSettlementDbContext BuildDbContext()
@@ -137,5 +140,39 @@ public sealed class AdjusterDecisionTests
 
         public Task<DocumentUploadResponse> UploadDocumentAsync(Guid claimId, IFormFile file, string providerId, CancellationToken ct)
             => throw new NotImplementedException();
+    }
+
+    private sealed class NoOpAuditLogger : IAuditLogger
+    {
+        public Task AppendAsync(AuditLogEntry entry, CancellationToken ct) => Task.CompletedTask;
+
+        public Task UpdateAsync(Guid entryId, object payload, CancellationToken ct)
+            => throw new InvalidOperationException();
+
+        public Task DeleteAsync(Guid entryId, CancellationToken ct)
+            => throw new InvalidOperationException();
+    }
+
+    private sealed class NoOpClaimMetrics : IClaimMetrics
+    {
+        public void RecordAgentExecution(string agentName, bool success)
+        {
+        }
+
+        public void RecordClaimOutcome(string outcome)
+        {
+        }
+
+        public void RecordFraudScore(decimal score)
+        {
+        }
+
+        public void RecordNotificationDelivery(string eventType, bool delivered)
+        {
+        }
+
+        public void RecordPipelineDuration(TimeSpan duration, string outcome)
+        {
+        }
     }
 }

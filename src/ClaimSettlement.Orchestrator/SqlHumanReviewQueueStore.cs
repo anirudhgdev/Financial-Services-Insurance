@@ -1,6 +1,7 @@
 using ClaimSettlement.Agents.Models;
 using ClaimSettlement.Agents.Pipeline;
 using ClaimSettlement.Domain.Entities;
+using ClaimSettlement.Infrastructure.Observability;
 using ClaimSettlement.Infrastructure.Persistence;
 using Microsoft.EntityFrameworkCore;
 
@@ -9,10 +10,12 @@ namespace ClaimSettlement.Orchestrator;
 public sealed class SqlHumanReviewQueueStore : IHumanReviewQueueStore
 {
     private readonly ClaimSettlementDbContext _dbContext;
+    private readonly IAuditLogger _auditLogger;
 
-    public SqlHumanReviewQueueStore(ClaimSettlementDbContext dbContext)
+    public SqlHumanReviewQueueStore(ClaimSettlementDbContext dbContext, IAuditLogger auditLogger)
     {
         _dbContext = dbContext;
+        _auditLogger = auditLogger;
     }
 
     public async Task<HumanReviewQueueEntry> EnqueueAsync(ClaimAgentContext context, string reason, CancellationToken ct)
@@ -75,6 +78,22 @@ public sealed class SqlHumanReviewQueueStore : IHumanReviewQueueStore
         });
 
         await _dbContext.SaveChangesAsync(ct);
+
+        await _auditLogger.AppendAsync(new AuditLogEntry
+        {
+            ProviderId = claim.ProviderId,
+            EventType = "HUMAN_REVIEW_ENQUEUED",
+            ActorId = "human-review-agent",
+            ActorType = "System",
+            ClaimId = claim.ClaimId,
+            Payload = new
+            {
+                reason,
+                assignedAdjuster,
+                claim.Status,
+                queuedAtUtc = now
+            }
+        }, ct);
 
         return new HumanReviewQueueEntry
         {
