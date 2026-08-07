@@ -1,6 +1,43 @@
-@ClaimSettlement.McpAdapters_HostAddress = http://localhost:5014
+@HostAddress = http://localhost:5014
 
-GET {{ClaimSettlement.McpAdapters_HostAddress}}/weatherforecast/
+### Get Policy
+GET {{HostAddress}}/policy/POL-001
 Accept: application/json
 
-###
+### Score Fraud
+POST {{HostAddress}}/fraud/score
+Content-Type: application/json
+
+{
+  "claimId": "CLM-001",
+  "policyNumber": "POL-001",
+  "claimantId": "CLT-001",
+  "claimType": "Auto",
+  "lossAmount": 15000,
+  "dateOfLoss": "2026-07-15T00:00:00Z",
+  "description": "Rear-end collision at intersection"
+}
+
+### Extract Document
+POST {{HostAddress}}/extract
+Content-Type: application/json
+
+{
+  "documentContent": "",
+  "fileName": "claim-photo.jpg"
+}
+
+### Send Notification
+POST {{HostAddress}}/notify
+Content-Type: application/json
+
+{
+  "recipientId": "CLT-001",
+  "channel": "Email",
+  "templateId": "claim-received",
+  "templateParameters": {
+    "claimId": "CLM-001",
+    "claimantName": "John Doe"
+  },
+  "idempotencyKey": "CLM-001-claim-received-20260715"
+}
