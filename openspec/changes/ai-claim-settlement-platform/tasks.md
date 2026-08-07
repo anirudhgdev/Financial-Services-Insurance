@@ -127,12 +127,12 @@
 
 ## 14. MCP Server Adapters
 
-- [ ] 14.1 Implement `PolicyManagementMcpAdapter` (ASP.NET Core minimal API): `GET /policy/{policyNumber}` → wraps Policy Management API with retry and circuit-breaker
-- [ ] 14.2 Implement `FraudDetectionMcpAdapter`: `POST /fraud/score` → wraps Fraud Detection Service with Polly circuit-breaker
-- [ ] 14.3 Implement `DocumentIntelligenceMcpAdapter`: `POST /extract` → wraps Azure Document Intelligence SDK
-- [ ] 14.4 Implement `NotificationMcpAdapter`: `POST /notify` → wraps Notification Service with idempotent message ID header
-- [ ] 14.5 Register all adapters as MAF tools in the agent DI container using `IMcpTool<TRequest, TResponse>` interface
-- [ ] 14.6 Write integration tests for each adapter (mock external services; verify retry, circuit-breaker, and error-mapping behavior)
+- [x] 14.1 Implement `PolicyManagementMcpAdapter` (ASP.NET Core minimal API): `GET /policy/{policyNumber}` → wraps Policy Management API with retry and circuit-breaker
+- [x] 14.2 Implement `FraudDetectionMcpAdapter`: `POST /fraud/score` → wraps Fraud Detection Service with Polly circuit-breaker
+- [x] 14.3 Implement `DocumentIntelligenceMcpAdapter`: `POST /extract` → wraps Azure Document Intelligence SDK
+- [x] 14.4 Implement `NotificationMcpAdapter`: `POST /notify` → wraps Notification Service with idempotent message ID header
+- [x] 14.5 Register all adapters as MAF tools in the agent DI container using `IMcpTool<TRequest, TResponse>` interface
+- [x] 14.6 Write integration tests for each adapter (mock external services; verify retry, circuit-breaker, and error-mapping behavior)
 
 ## 15. Angular Frontend
 
