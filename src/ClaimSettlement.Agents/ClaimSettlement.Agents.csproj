@@ -7,8 +7,6 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="Microsoft.AgentFramework" Version="*" />
-    <PackageReference Include="Microsoft.CopilotSDK" Version="*" />
     <PackageReference Include="Azure.AI.OpenAI" Version="2.1.0" />
     <PackageReference Include="Azure.Search.Documents" Version="11.7.0" />
     <PackageReference Include="Azure.Storage.Blobs" Version="12.23.0" />
