@@ -1,0 +1,39 @@
+{
+    "$schema": "https://schema.management.azure.com/schemas/2020-06-01/deploymentTemplate.json#",
+    "offer": {
+        "publisher": "contoso-insurance",
+        "offerId": "claim-settlement-ai-platform",
+        "displayName": "Claim Settlement AI Platform",
+        "offerType": "AzureApplication",
+        "planId": "standard",
+        "planDisplayName": "Standard",
+        "version": "1.0.0"
+    },
+    "artifacts": {
+        "deploymentTemplate": "deployment-template.bicep",
+        "offerListing": "offer-listing.md",
+        "deploymentRunbook": "../docs/deployment-runbook.md",
+        "applicationInsightsDashboard": "../docs/application-insights-dashboard.md",
+        "entraManifests": [
+            "../infra/entra/backend-api.manifest.json",
+            "../infra/entra/frontend-spa.manifest.json",
+            "../infra/entra/mcp-adapters.manifest.json"
+        ]
+    },
+    "configuration": {
+        "authentication": "MicrosoftEntraId",
+        "secretManagement": "AzureKeyVault",
+        "serviceAuthentication": "ManagedIdentity",
+        "tenantIsolation": "ProviderScopedQueriesAndAzureSqlRowLevelSecurity",
+        "evaluationQualityGate": {
+            "minimumAccuracy": 0.95,
+            "maximumP95LatencySeconds": 30
+        }
+    },
+    "postDeployment": [
+        "Configure Entra ID application registrations and application roles.",
+        "Apply EF Core migrations and the provider RLS policy script.",
+        "Configure Key Vault references and managed-identity role assignments.",
+        "Onboard the first provider and run the v1 evaluation dataset."
+    ]
+}

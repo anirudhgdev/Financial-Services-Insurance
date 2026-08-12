@@ -14,6 +14,8 @@ public interface IClaimIntakeService
         string claimantId,
         CancellationToken ct);
 
+    void RecordTokenUsage(string sessionId, string providerId, string claimantId, long? inputTokenCount, long? outputTokenCount);
+
     Task<DocumentUploadResponse> UploadDocumentAsync(
         Guid claimId,
         IFormFile file,

@@ -1,0 +1,1 @@
+export { roleGuard } from '../../../claim-portal/src/app/role.guard';

@@ -23,6 +23,14 @@ public sealed class ClaimSettlementDbContext : DbContext
 
     public DbSet<AdjusterAssignment> AdjusterAssignments => Set<AdjusterAssignment>();
 
+    public DbSet<ProviderUserMembership> ProviderUserMemberships => Set<ProviderUserMembership>();
+
+    public DbSet<ProviderUserRole> ProviderUserRoles => Set<ProviderUserRole>();
+
+    public DbSet<EvaluationRun> EvaluationRuns => Set<EvaluationRun>();
+
+    public DbSet<ToolInvocationAudit> ToolInvocationAudits => Set<ToolInvocationAudit>();
+
     public override int SaveChanges()
     {
         EnforceAuditLogAppendOnly();
@@ -61,8 +69,23 @@ public sealed class ClaimSettlementDbContext : DbContext
             entity.Property(x => x.CreatedAt).HasDefaultValueSql("SYSUTCDATETIME()");
             entity.Property(x => x.UpdatedAt).HasDefaultValueSql("SYSUTCDATETIME()");
 
+            entity.HasOne(x => x.EvaluationRun)
+                .WithMany(x => x.Claims)
+                .HasForeignKey(x => x.EvaluationRunId)
+                .OnDelete(DeleteBehavior.SetNull);
+
             entity.HasIndex(x => new { x.ProviderId, x.Status, x.CreatedAt });
             entity.HasIndex(x => new { x.ProviderId, x.PolicyNumber, x.DateOfLoss });
+            entity.HasIndex(x => new { x.ProviderId, x.EvaluationRunId });
+        });
+
+        modelBuilder.Entity<EvaluationRun>(entity =>
+        {
+            entity.HasKey(x => x.RunId);
+            entity.Property(x => x.ProviderId).HasMaxLength(64).IsRequired();
+            entity.Property(x => x.CreatedByUserId).HasMaxLength(128).IsRequired();
+            entity.Property(x => x.DatasetVersion).HasMaxLength(64).IsRequired();
+            entity.HasIndex(x => new { x.ProviderId, x.CreatedByUserId, x.RunId });
         });
 
         modelBuilder.Entity<ClaimPipelineState>(entity =>
@@ -110,6 +133,21 @@ public sealed class ClaimSettlementDbContext : DbContext
             });
 
             entity.HasIndex(x => new { x.ClaimId, x.AgentId, x.CreatedAt });
+        });
+
+        modelBuilder.Entity<ToolInvocationAudit>(entity =>
+        {
+            entity.HasKey(x => x.InvocationId);
+            entity.Property(x => x.ProviderId).HasMaxLength(64).IsRequired();
+            entity.Property(x => x.AgentId).HasMaxLength(128).IsRequired();
+            entity.Property(x => x.ToolName).HasMaxLength(128).IsRequired();
+            entity.Property(x => x.Outcome).HasMaxLength(32).IsRequired();
+            entity.HasOne(x => x.Claim)
+                .WithMany(x => x.ToolInvocations)
+                .HasForeignKey(x => x.ClaimId)
+                .OnDelete(DeleteBehavior.Cascade);
+            entity.HasIndex(x => new { x.ClaimId, x.AgentId, x.InvokedAtUtc });
+            entity.HasIndex(x => new { x.ProviderId, x.InvokedAtUtc });
         });
 
         modelBuilder.Entity<AuditLog>(entity =>
@@ -183,6 +221,28 @@ public sealed class ClaimSettlementDbContext : DbContext
             entity.HasIndex(x => new { x.ProviderId, x.AssignedAt });
             entity.HasIndex(x => new { x.AdjusterId, x.AssignedAt });
             entity.HasIndex(x => new { x.ClaimId, x.AssignedAt });
+        });
+
+        modelBuilder.Entity<ProviderUserMembership>(entity =>
+        {
+            entity.HasKey(x => new { x.ProviderId, x.UserId });
+            entity.Property(x => x.ProviderId).HasMaxLength(64).IsRequired();
+            entity.Property(x => x.UserId).HasMaxLength(128).IsRequired();
+            entity.Property(x => x.Email).HasMaxLength(256);
+            entity.HasIndex(x => new { x.ProviderId, x.LastAccessedAt });
+        });
+
+        modelBuilder.Entity<ProviderUserRole>(entity =>
+        {
+            entity.HasKey(x => new { x.ProviderId, x.UserId, x.Role });
+            entity.Property(x => x.ProviderId).HasMaxLength(64).IsRequired();
+            entity.Property(x => x.UserId).HasMaxLength(128).IsRequired();
+            entity.Property(x => x.Role).HasMaxLength(64).IsRequired();
+            entity.Property(x => x.AssignedByUserId).HasMaxLength(128).IsRequired();
+            entity.HasOne(x => x.Membership)
+                .WithMany(x => x.Roles)
+                .HasForeignKey(x => new { x.ProviderId, x.UserId })
+                .OnDelete(DeleteBehavior.Cascade);
         });
     }
 

@@ -138,6 +138,10 @@ public sealed class AdjusterDecisionTests
         public Task<CompleteClaimIntakeResponse> CompleteAsync(CompleteClaimIntakeRequest request, string providerId, string claimantId, CancellationToken ct)
             => throw new NotImplementedException();
 
+        public void RecordTokenUsage(string sessionId, string providerId, string claimantId, long? inputTokenCount, long? outputTokenCount)
+        {
+        }
+
         public Task<DocumentUploadResponse> UploadDocumentAsync(Guid claimId, IFormFile file, string providerId, CancellationToken ct)
             => throw new NotImplementedException();
     }

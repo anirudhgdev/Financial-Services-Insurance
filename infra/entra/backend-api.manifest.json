@@ -22,7 +22,9 @@
   "appRoles": [
     {
       "id": "00000000-0000-0000-0000-000000000011",
-      "allowedMemberTypes": ["User"],
+      "allowedMemberTypes": [
+        "User"
+      ],
       "displayName": "Customer",
       "description": "Customer claim operations",
       "value": "Customer",
@@ -30,7 +32,9 @@
     },
     {
       "id": "00000000-0000-0000-0000-000000000012",
-      "allowedMemberTypes": ["User"],
+      "allowedMemberTypes": [
+        "User"
+      ],
       "displayName": "Adjuster",
       "description": "Adjuster claim review operations",
       "value": "Adjuster",
@@ -38,7 +42,9 @@
     },
     {
       "id": "00000000-0000-0000-0000-000000000013",
-      "allowedMemberTypes": ["User"],
+      "allowedMemberTypes": [
+        "User"
+      ],
       "displayName": "ProviderAdmin",
       "description": "Provider administration operations",
       "value": "ProviderAdmin",
@@ -46,7 +52,9 @@
     },
     {
       "id": "00000000-0000-0000-0000-000000000014",
-      "allowedMemberTypes": ["User"],
+      "allowedMemberTypes": [
+        "User"
+      ],
       "displayName": "PlatformAdmin",
       "description": "Platform-wide administration operations",
       "value": "PlatformAdmin",
@@ -54,10 +62,23 @@
     },
     {
       "id": "00000000-0000-0000-0000-000000000015",
-      "allowedMemberTypes": ["Application"],
+      "allowedMemberTypes": [
+        "Application"
+      ],
       "displayName": "McpAdapter.Access",
       "description": "Service-to-service access for MCP adapters",
       "value": "McpAdapter.Access",
+      "isEnabled": true
+    },
+    {
+      "id": "00000000-0000-0000-0000-000000000016",
+      "allowedMemberTypes": [
+        "User",
+        "Application"
+      ],
+      "displayName": "EvaluationRunner",
+      "description": "Run and retrieve provider-scoped evaluation harness results",
+      "value": "EvaluationRunner",
       "isEnabled": true
     }
   ]

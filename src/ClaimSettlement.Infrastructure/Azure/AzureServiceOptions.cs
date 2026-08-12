@@ -9,6 +9,17 @@ public sealed class AzureOpenAIOptions
     public string DeploymentName { get; set; } = string.Empty;
 }
 
+public sealed class AzureAiFoundryOptions
+{
+    public const string SectionName = "AzureAiFoundry";
+
+    public string Endpoint { get; set; } = string.Empty;
+
+    public string DeploymentName { get; set; } = string.Empty;
+
+    public string Authentication { get; set; } = "ManagedIdentity";
+}
+
 public sealed class AzureSearchOptions
 {
     public const string SectionName = "Azure:Search";

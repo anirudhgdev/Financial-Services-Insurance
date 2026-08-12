@@ -6,6 +6,8 @@ namespace ClaimSettlement.Agents.Pipeline;
 
 public sealed class SettlementDecisionAgent : IClaimAgent<ClaimPipelineInput, SettlementDecisionResult>
 {
+    private static readonly JsonSerializerOptions SerializerOptions = new(JsonSerializerDefaults.Web);
+
     public Task<SettlementDecisionResult> InvokeAsync(ClaimAgentContext context, ClaimPipelineInput input, CancellationToken ct)
     {
         var missingInputs = ValidateUpstreamInputs(context);
@@ -142,7 +144,7 @@ public sealed class SettlementDecisionAgent : IClaimAgent<ClaimPipelineInput, Se
             return null;
         }
 
-        return System.Text.Json.JsonSerializer.Deserialize<T>(value.RootElement.GetRawText());
+        return System.Text.Json.JsonSerializer.Deserialize<T>(value.RootElement.GetRawText(), SerializerOptions);
     }
 
     private static decimal ComputeConfidence(PolicyValidationResult policy, FraudDetectionResult fraud, DocumentAnalysisResult documentAnalysis)

@@ -9,6 +9,12 @@
 
   <ItemGroup>
     <PackageReference Include="Azure.AI.OpenAI" Version="2.1.0" />
+    <PackageReference Include="Azure.Identity" Version="1.15.0" />
+    <PackageReference Include="Azure.Storage.Blobs" Version="12.23.0" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Content Include="Datasets\**\*.json" CopyToOutputDirectory="PreserveNewest" />
   </ItemGroup>
 
 </Project>

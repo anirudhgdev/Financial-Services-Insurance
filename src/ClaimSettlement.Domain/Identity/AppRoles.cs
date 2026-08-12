@@ -13,11 +13,14 @@ public static class AppRoles
 
     public const string PlatformAdmin = "PlatformAdmin";
 
+    public const string EvaluationRunner = "EvaluationRunner";
+
     public static IReadOnlyCollection<string> All { get; } =
     [
         Customer,
         Adjuster,
         ProviderAdmin,
-        PlatformAdmin
+        PlatformAdmin,
+        EvaluationRunner
     ];
 }
