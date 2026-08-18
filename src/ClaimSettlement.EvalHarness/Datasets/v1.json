@@ -1,0 +1,136 @@
+{
+    "version": "v1",
+    "cases": [
+        {
+            "scenarioId": "valid-claim",
+            "scenarioType": "valid_claim",
+            "claimInput": {
+                "policyNumber": "POL-VALID",
+                "claimType": "auto",
+                "lossAmount": 1200
+            },
+            "supportingDocumentFixtures": [
+                "valid-claim.pdf"
+            ],
+            "expectedDecision": "APPROVE",
+            "expectedFraudVerdict": "FRAUD_LOW",
+            "expectedPolicyVerdict": "POLICY_VALID",
+            "expectedNotificationEvents": [
+                "INTAKE_CONFIRMATION",
+                "SETTLEMENT_DECISION"
+            ]
+        },
+        {
+            "scenarioId": "expired-policy",
+            "scenarioType": "expired_policy",
+            "claimInput": {
+                "policyNumber": "POL-EXPIRED",
+                "claimType": "auto",
+                "lossAmount": 900
+            },
+            "supportingDocumentFixtures": [
+                "expired-policy.pdf"
+            ],
+            "expectedDecision": "REJECT",
+            "expectedFraudVerdict": "FRAUD_LOW",
+            "expectedPolicyVerdict": "POLICY_EXPIRED",
+            "expectedNotificationEvents": [
+                "SETTLEMENT_DECISION"
+            ]
+        },
+        {
+            "scenarioId": "duplicate-claim",
+            "scenarioType": "duplicate_claim",
+            "claimInput": {
+                "policyNumber": "POL-DUP",
+                "claimType": "property",
+                "lossAmount": 4300
+            },
+            "supportingDocumentFixtures": [
+                "duplicate-claim.pdf"
+            ],
+            "expectedDecision": "MANUAL_REVIEW",
+            "expectedFraudVerdict": "FRAUD_HIGH",
+            "expectedPolicyVerdict": "POLICY_VALID",
+            "expectedNotificationEvents": [
+                "HUMAN_REVIEW_ASSIGNED"
+            ]
+        },
+        {
+            "scenarioId": "missing-documents",
+            "scenarioType": "missing_documents",
+            "claimInput": {
+                "policyNumber": "POL-GAP",
+                "claimType": "health",
+                "lossAmount": 700
+            },
+            "supportingDocumentFixtures": [],
+            "expectedDecision": "MANUAL_REVIEW",
+            "expectedFraudVerdict": "FRAUD_LOW",
+            "expectedPolicyVerdict": "POLICY_VALID",
+            "expectedNotificationEvents": [
+                "INFORMATION_REQUEST"
+            ]
+        },
+        {
+            "scenarioId": "high-fraud",
+            "scenarioType": "high_fraud_score",
+            "claimInput": {
+                "policyNumber": "POL-FRAUD",
+                "claimType": "auto",
+                "lossAmount": 10000
+            },
+            "supportingDocumentFixtures": [
+                "high-fraud.pdf"
+            ],
+            "expectedDecision": "MANUAL_REVIEW",
+            "expectedFraudVerdict": "FRAUD_HIGH",
+            "expectedPolicyVerdict": "POLICY_VALID",
+            "expectedNotificationEvents": [
+                "HUMAN_REVIEW_ASSIGNED"
+            ]
+        },
+        {
+            "scenarioId": "large-claim",
+            "scenarioType": "large_claim_amount",
+            "claimInput": {
+                "policyNumber": "POL-LARGE",
+                "claimType": "property",
+                "lossAmount": 250000
+            },
+            "supportingDocumentFixtures": [
+                "large-claim.pdf"
+            ],
+            "expectedDecision": "MANUAL_REVIEW",
+            "expectedFraudVerdict": "FRAUD_MEDIUM",
+            "expectedPolicyVerdict": "POLICY_VALID",
+            "expectedNotificationEvents": [
+                "HUMAN_REVIEW_ASSIGNED"
+            ]
+        },
+        {
+            "scenarioId": "multiple-assets",
+            "scenarioType": "multiple_damaged_assets",
+            "claimInput": {
+                "policyNumber": "POL-ASSETS",
+                "claimType": "property",
+                "lossAmount": 8000,
+                "assets": [
+                    "roof",
+                    "garage"
+                ]
+            },
+            "supportingDocumentFixtures": [
+                "multiple-assets.pdf",
+                "asset-photos.zip"
+            ],
+            "expectedDecision": "APPROVE",
+            "expectedFraudVerdict": "FRAUD_LOW",
+            "expectedPolicyVerdict": "POLICY_VALID",
+            "expectedNotificationEvents": [
+                "INTAKE_CONFIRMATION",
+                "SETTLEMENT_DECISION"
+            ]
+        }
+    ]
+}

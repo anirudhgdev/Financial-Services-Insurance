@@ -12,6 +12,8 @@ public static class AuthorizationPolicies
 
     public const string PlatformAdmin = AppRoles.PlatformAdmin;
 
+    public const string EvaluationRunner = AppRoles.EvaluationRunner;
+
     public const string AnyAuthenticated = "AnyAuthenticated";
 
     public const string ProviderOrPlatformAdmin = "ProviderOrPlatformAdmin";
@@ -27,6 +29,7 @@ public static class AuthorizationPolicies
             options.AddPolicy(Adjuster, policy => policy.RequireRole(AppRoles.Adjuster));
             options.AddPolicy(ProviderAdmin, policy => policy.RequireRole(AppRoles.ProviderAdmin));
             options.AddPolicy(PlatformAdmin, policy => policy.RequireRole(AppRoles.PlatformAdmin));
+            options.AddPolicy(EvaluationRunner, policy => policy.RequireRole(AppRoles.EvaluationRunner));
 
             options.AddPolicy(AnyAuthenticated, policy => policy.RequireAuthenticatedUser());
 

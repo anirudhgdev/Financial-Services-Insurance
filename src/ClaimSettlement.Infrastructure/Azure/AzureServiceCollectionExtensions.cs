@@ -21,9 +21,15 @@ public static class AzureServiceCollectionExtensions
     {
         var credential = new DefaultAzureCredential();
 
+        var foundryOptions = configuration.GetSection(AzureAiFoundryOptions.SectionName).Get<AzureAiFoundryOptions>();
         var openAiOptions = configuration.GetSection(AzureOpenAIOptions.SectionName).Get<AzureOpenAIOptions>();
-        if (openAiOptions is not null &&
-            TryBuildServiceUri(openAiOptions.Endpoint, out var openAiEndpointUri))
+        var aiEndpoint = foundryOptions?.Endpoint;
+        if (string.IsNullOrWhiteSpace(aiEndpoint))
+        {
+            aiEndpoint = openAiOptions?.Endpoint;
+        }
+
+        if (TryBuildServiceUri(aiEndpoint, out var openAiEndpointUri))
         {
             services.AddSingleton(_ => new AzureOpenAIClient(
                 openAiEndpointUri,

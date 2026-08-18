@@ -136,34 +136,34 @@
 
 ## 15. Angular Frontend
 
-- [ ] 15.1 Implement MSAL Angular integration with Entra ID; guard all routes by role
-- [ ] 15.2 Implement Copilot Chat component in `claim-portal` module: conversational intake using Copilot SDK streaming; document upload with drag-and-drop
-- [ ] 15.3 Implement claim status tracker component: real-time status polling (or SignalR push) showing pipeline stage, estimated completion, and current status message
-- [ ] 15.4 Implement adjuster portal: paginated claim queue table, claim detail view with full AI review package, decision form with settlement override
-- [ ] 15.5 Implement admin portal: provider configuration editor with validation; user management; audit log viewer with date-range export
-- [ ] 15.6 Add Angular unit tests for Copilot chat flow, claim status tracker, and adjuster decision form validation
+- [x] 15.1 Implement MSAL Angular integration with Entra ID; guard all routes by role
+- [x] 15.2 Implement Copilot Chat component in `claim-portal` module: conversational intake using Copilot SDK streaming; document upload with drag-and-drop
+- [x] 15.3 Implement claim status tracker component: real-time status polling (or SignalR push) showing pipeline stage, estimated completion, and current status message
+- [x] 15.4 Implement adjuster portal: paginated claim queue table, claim detail view with full AI review package, decision form with settlement override
+- [x] 15.5 Implement admin portal: provider configuration editor with validation; user management; audit log viewer with date-range export
+- [x] 15.6 Add Angular unit tests for Copilot chat flow, claim status tracker, and adjuster decision form validation
 
 ## 16. AI Evaluation Harness
 
-- [ ] 16.1 Create `ClaimSettlement.EvalHarness` .NET 9 console project with CLI entry point (`dotnet run -- run --env <env> --dataset <version>`)
-- [ ] 16.2 Define versioned test dataset (JSON fixtures) for all 7 required scenarios: valid claim, expired policy, duplicate claim, missing documents, high fraud score, large claim amount, multiple damaged assets
-- [ ] 16.3 Implement test case submission: authenticate against the target environment; submit each claim via the intake API; poll for pipeline completion
-- [ ] 16.4 Implement decision accuracy metrics: compare actual vs. expected decisions; compute overall accuracy, per-class precision/recall/F1
-- [ ] 16.5 Implement fraud metrics: detection rate, false positive rate, AUC-ROC for fraud scores, mean score per scenario type
-- [ ] 16.6 Implement latency measurement: record wall-clock time per pipeline stage and total; compute P50/P95/P99 percentiles
-- [ ] 16.7 Implement hallucination detection: parse reasoning narrative and review summary; verify all cited identifiers, dates, and amounts against claim record
-- [ ] 16.8 Implement tool invocation validation: read agent output metadata to verify expected vs. actual tool calls per agent
-- [ ] 16.9 Implement human-review rate computation per scenario type; flag anomalies > 10 percentage points from expected rate
-- [ ] 16.10 Implement cost-per-claim estimation: sum token usage across all Azure OpenAI calls; apply current pricing; report per-agent and total USD
-- [ ] 16.11 Implement benchmark report writer: output JSON Lines + Markdown reports to Azure Blob Storage with SHA-256 hash; print summary to stdout
-- [ ] 16.12 Add harness invocation to CI/CD pipeline (GitHub Actions / Azure DevOps); fail build if accuracy < 95% or P95 latency > 30 seconds
+- [x] 16.1 Create `ClaimSettlement.EvalHarness` .NET 9 console project with CLI entry point (`dotnet run -- run --env <env> --dataset <version>`)
+- [x] 16.2 Define versioned test dataset (JSON fixtures) for all 7 required scenarios: valid claim, expired policy, duplicate claim, missing documents, high fraud score, large claim amount, multiple damaged assets
+- [x] 16.3 Implement test case submission: authenticate against the target environment; submit each claim via the intake API; poll for pipeline completion
+- [x] 16.4 Implement decision accuracy metrics: compare actual vs. expected decisions; compute overall accuracy, per-class precision/recall/F1
+- [x] 16.5 Implement fraud metrics: detection rate, false positive rate, AUC-ROC for fraud scores, mean score per scenario type
+- [x] 16.6 Implement latency measurement: record wall-clock time per pipeline stage and total; compute P50/P95/P99 percentiles
+- [x] 16.7 Implement hallucination detection: parse reasoning narrative and review summary; verify all cited identifiers, dates, and amounts against claim record
+- [x] 16.8 Implement tool invocation validation: read agent output metadata to verify expected vs. actual tool calls per agent
+- [x] 16.9 Implement human-review rate computation per scenario type; flag anomalies > 10 percentage points from expected rate
+- [x] 16.10 Implement cost-per-claim estimation: sum token usage across all Azure OpenAI calls; apply current pricing; report per-agent and total USD
+- [x] 16.11 Implement benchmark report writer: output JSON Lines + Markdown reports to Azure Blob Storage with SHA-256 hash; print summary to stdout
+- [x] 16.12 Add harness invocation to CI/CD pipeline (GitHub Actions / Azure DevOps); fail build if accuracy < 95% or P95 latency > 30 seconds
 
 ## 17. Production Readiness
 
-- [ ] 17.1 Write end-to-end integration tests covering the full happy path (intake → document analysis → policy validation → fraud detection → settlement decision → notification)
-- [ ] 17.2 Write end-to-end integration tests for the human-review branch (high-fraud claim → adjuster assignment → decision → notification)
-- [ ] 17.3 Perform load test at configured concurrency limit (100 claims/provider); verify no claims lost or deadlocked
-- [ ] 17.4 Conduct security review: verify all endpoints require valid Entra ID token, provider isolation enforced, no PII in logs, secrets in Key Vault only
-- [ ] 17.5 Write deployment runbook: infrastructure provisioning steps, environment variable checklist, first-provider onboarding steps
-- [ ] 17.6 Create Application Insights dashboard: claims pipeline metrics, agent error rates, fraud score distribution, cost-per-claim trend, SLA breach rate
-- [ ] 17.7 Package for Microsoft Marketplace: create offer listing artifacts, deployment template, and marketplace configuration manifest
+- [x] 17.1 Write end-to-end integration tests covering the full happy path (intake → document analysis → policy validation → fraud detection → settlement decision → notification)
+- [x] 17.2 Write end-to-end integration tests for the human-review branch (high-fraud claim → adjuster assignment → decision → notification)
+- [x] 17.3 Perform load test at configured concurrency limit (100 claims/provider); verify no claims lost or deadlocked
+- [x] 17.4 Conduct security review: verify all endpoints require valid Entra ID token, provider isolation enforced, no PII in logs, secrets in Key Vault only
+- [x] 17.5 Write deployment runbook: infrastructure provisioning steps, environment variable checklist, first-provider onboarding steps
+- [x] 17.6 Create Application Insights dashboard: claims pipeline metrics, agent error rates, fraud score distribution, cost-per-claim trend, SLA breach rate
+- [x] 17.7 Package for Microsoft Marketplace: create offer listing artifacts, deployment template, and marketplace configuration manifest

@@ -24,9 +24,15 @@ public sealed class Claim : IProviderScoped
 
     public DateTime UpdatedAt { get; set; }
 
+    public Guid? EvaluationRunId { get; set; }
+
+    public EvaluationRun? EvaluationRun { get; set; }
+
     public ClaimPipelineState? PipelineState { get; set; }
 
     public ICollection<AgentOutput> AgentOutputs { get; set; } = new List<AgentOutput>();
+
+    public ICollection<ToolInvocationAudit> ToolInvocations { get; set; } = new List<ToolInvocationAudit>();
 
     public ICollection<AuditLog> AuditLogs { get; set; } = new List<AuditLog>();
 

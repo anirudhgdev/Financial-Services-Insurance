@@ -6,6 +6,7 @@ using ClaimSettlement.Infrastructure.Persistence;
 using Microsoft.EntityFrameworkCore;
 using System.Security.Claims;
 using System.Text.Json;
+using Claim = ClaimSettlement.Domain.Entities.Claim;
 
 namespace ClaimSettlement.Orchestrator;
 

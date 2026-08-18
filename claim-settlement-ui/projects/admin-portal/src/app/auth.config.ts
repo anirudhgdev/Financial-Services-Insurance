@@ -1,0 +1,1 @@
+export { createMsalInstance, getRuntimeAuthConfiguration } from '../../../claim-portal/src/app/auth.config';

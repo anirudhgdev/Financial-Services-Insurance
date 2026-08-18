@@ -1,0 +1,46 @@
+trigger:
+  branches:
+    include:
+      - main
+
+pr:
+  branches:
+    include:
+      - main
+
+# This self-hosted pool runs on an Azure host with the assigned managed identity.
+pool:
+  name: ClaimSettlement-ManagedIdentity
+
+variables:
+  - group: claim-settlement-evaluation
+  - name: buildConfiguration
+    value: Release
+
+steps:
+  - task: UseDotNet@2
+    displayName: Use .NET 9 SDK
+    inputs:
+      packageType: sdk
+      version: 9.x
+
+  - script: dotnet restore ClaimSettlement.sln
+    displayName: Restore
+
+  - script: dotnet build ClaimSettlement.sln --configuration $(buildConfiguration) --no-restore
+    displayName: Build
+
+  - script: dotnet test ClaimSettlement.sln --configuration $(buildConfiguration) --no-build --no-restore
+    displayName: Test
+
+  - script: dotnet run --project src/ClaimSettlement.EvalHarness/ClaimSettlement.EvalHarness.csproj --configuration $(buildConfiguration) --no-build -- run --env $(CLAIM_SETTLEMENT_EVALUATION_ENVIRONMENT) --dataset v1
+    displayName: Run evaluation harness
+    env:
+      CI: true
+      CLAIM_SETTLEMENT_API_BASE_URL: $(CLAIM_SETTLEMENT_API_BASE_URL)
+      CLAIM_SETTLEMENT_API_AUDIENCE: $(CLAIM_SETTLEMENT_API_AUDIENCE)
+      CLAIM_SETTLEMENT_EVALUATION_REPORTS_CONTAINER_URI: $(CLAIM_SETTLEMENT_EVALUATION_REPORTS_CONTAINER_URI)
+      CLAIM_SETTLEMENT_OPENAI_INPUT_USD_PER_MILLION: $(CLAIM_SETTLEMENT_OPENAI_INPUT_USD_PER_MILLION)
+      CLAIM_SETTLEMENT_OPENAI_OUTPUT_USD_PER_MILLION: $(CLAIM_SETTLEMENT_OPENAI_OUTPUT_USD_PER_MILLION)
+      CLAIM_SETTLEMENT_MIN_ACCURACY: $(CLAIM_SETTLEMENT_MIN_ACCURACY)
+      CLAIM_SETTLEMENT_MAX_P95_LATENCY_SECONDS: $(CLAIM_SETTLEMENT_MAX_P95_LATENCY_SECONDS)

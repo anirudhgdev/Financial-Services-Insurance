@@ -1,4 +1,5 @@
 using ClaimSettlement.Api.Authorization;
+using ClaimSettlement.Agents;
 using ClaimSettlement.Api.Claims;
 using ClaimSettlement.Api.Identity;
 using ClaimSettlement.Api.Observability;
@@ -12,6 +13,7 @@ using Microsoft.AspNetCore.Diagnostics.HealthChecks;
 using OpenTelemetry.Metrics;
 using OpenTelemetry.Trace;
 using Microsoft.Identity.Web;
+using Microsoft.AspNetCore.Authentication;
 using System.Text.Json;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -33,10 +35,12 @@ builder.Services.AddClaimSettlementAuthorization();
 // Make the current HTTP context available to the provider context accessor.
 builder.Services.AddHttpContextAccessor();
 builder.Services.AddScoped<IProviderContextAccessor, ProviderContextAccessor>();
+builder.Services.AddScoped<IClaimsTransformation, LocalRoleClaimsTransformation>();
 
 // Register persistence and data-access services.
 builder.Services.AddClaimSettlementInfrastructure(builder.Configuration);
 builder.Services.AddClaimIntakeServices();
+builder.Services.AddClaimSettlementAgents(builder.Configuration);
 
 builder.Services.Configure<AzureOpenAIOptions>(builder.Configuration.GetSection(AzureOpenAIOptions.SectionName));
 builder.Services.Configure<NotificationServiceOptions>(builder.Configuration.GetSection(NotificationServiceOptions.SectionName));
@@ -88,6 +92,7 @@ if (app.Environment.IsDevelopment())
 app.UseHttpsRedirection();
 
 app.UseAuthentication();
+app.UseMiddleware<ProviderUserAccessMiddleware>();
 app.UseAuthorization();
 app.UseMiddleware<AuthenticationAuditMiddleware>();
 

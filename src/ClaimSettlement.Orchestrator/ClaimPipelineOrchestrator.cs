@@ -10,6 +10,7 @@ using System.Diagnostics;
 using System.Security.Claims;
 using System.Text.Json;
 using System.Threading.Channels;
+using Claim = ClaimSettlement.Domain.Entities.Claim;
 
 namespace ClaimSettlement.Orchestrator;
 
@@ -22,7 +23,6 @@ public sealed class ClaimPipelineOrchestrator : BackgroundService
     private readonly ILogger<ClaimPipelineOrchestrator> _logger;
     private readonly OrchestratorOptions _options;
     private readonly IClaimMetrics _claimMetrics;
-    private readonly IAuditLogger _auditLogger;
     private readonly ConcurrentDictionary<string, ProviderDispatchQueue> _providerQueues = new(StringComparer.OrdinalIgnoreCase);
     private readonly ConcurrentDictionary<Guid, byte> _queuedOrRunningClaims = new();
 
@@ -66,14 +66,12 @@ public sealed class ClaimPipelineOrchestrator : BackgroundService
         IServiceScopeFactory scopeFactory,
         IOptions<OrchestratorOptions> options,
         ILogger<ClaimPipelineOrchestrator> logger,
-        IClaimMetrics claimMetrics,
-        IAuditLogger auditLogger)
+        IClaimMetrics claimMetrics)
     {
         _scopeFactory = scopeFactory;
         _logger = logger;
         _options = options.Value;
         _claimMetrics = claimMetrics;
-        _auditLogger = auditLogger;
     }
 
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
@@ -160,13 +158,17 @@ public sealed class ClaimPipelineOrchestrator : BackgroundService
     private Task StartClaimExecutionAsync(string providerId, Guid claimId, CancellationToken ct)
         => Task.Run(() => ProcessClaimAsync(providerId, claimId, ct), ct);
 
-    private async Task ProcessClaimAsync(string providerId, Guid claimId, CancellationToken ct)
+    internal async Task ProcessClaimAsync(string providerId, Guid claimId, CancellationToken ct)
     {
         try
         {
             using var scope = _scopeFactory.CreateScope();
+            using var providerSession = scope.ServiceProvider
+                .GetRequiredService<IProviderSqlSessionContext>()
+                .Begin(providerId);
             var dbContext = scope.ServiceProvider.GetRequiredService<ClaimSettlementDbContext>();
             var providerConfigurationService = scope.ServiceProvider.GetRequiredService<IProviderConfigurationService>();
+            var auditLogger = scope.ServiceProvider.GetRequiredService<IAuditLogger>();
 
             var claim = await dbContext.Claims
                 .Include(x => x.PipelineState)
@@ -186,7 +188,7 @@ public sealed class ClaimPipelineOrchestrator : BackgroundService
             claim.UpdatedAt = DateTime.UtcNow;
             pipelineState.Status = "PIPELINE_IN_PROGRESS";
 
-            await _auditLogger.AppendAsync(new AuditLogEntry
+            await auditLogger.AppendAsync(new AuditLogEntry
             {
                 ProviderId = claim.ProviderId,
                 EventType = "PIPELINE_STARTED",
@@ -225,7 +227,7 @@ public sealed class ClaimPipelineOrchestrator : BackgroundService
                 if (!invocationResult.Success || invocationResult.SerializedOutput is null)
                 {
                     _claimMetrics.RecordAgentExecution(step.Name, success: false);
-                    await _auditLogger.AppendAsync(new AuditLogEntry
+                    await auditLogger.AppendAsync(new AuditLogEntry
                     {
                         ProviderId = claim.ProviderId,
                         EventType = "AGENT_STEP_FAILED",
@@ -252,7 +254,7 @@ public sealed class ClaimPipelineOrchestrator : BackgroundService
                 }
 
                 _claimMetrics.RecordAgentExecution(step.Name, success: true);
-                await _auditLogger.AppendAsync(new AuditLogEntry
+                await auditLogger.AppendAsync(new AuditLogEntry
                 {
                     ProviderId = claim.ProviderId,
                     EventType = "AGENT_STEP_COMPLETED",
@@ -285,6 +287,20 @@ public sealed class ClaimPipelineOrchestrator : BackgroundService
                     CreatedAt = DateTime.UtcNow,
                     SchemaVersion = "1.0"
                 });
+
+                if (TryGetToolName(step.Name, out var toolName))
+                {
+                    dbContext.ToolInvocationAudits.Add(new ToolInvocationAudit
+                    {
+                        InvocationId = Guid.NewGuid(),
+                        ClaimId = claim.ClaimId,
+                        ProviderId = claim.ProviderId,
+                        AgentId = step.Name,
+                        ToolName = toolName,
+                        InvokedAtUtc = DateTime.UtcNow,
+                        Outcome = "SUCCEEDED"
+                    });
+                }
 
                 pipelineState.CurrentStep = step.Name;
                 pipelineState.CompletedSteps = JsonSerializer.Serialize(completedSteps, SerializerOptions);
@@ -349,7 +365,7 @@ public sealed class ClaimPipelineOrchestrator : BackgroundService
             _claimMetrics.RecordClaimOutcome(claim.Status);
             _claimMetrics.RecordPipelineDuration(pipelineState.CompletedAt.Value - pipelineState.StartedAt, claim.Status);
 
-            await _auditLogger.AppendAsync(new AuditLogEntry
+            await auditLogger.AppendAsync(new AuditLogEntry
             {
                 ProviderId = claim.ProviderId,
                 EventType = "PIPELINE_COMPLETED",
@@ -420,6 +436,18 @@ public sealed class ClaimPipelineOrchestrator : BackgroundService
 
         return JsonSerializer.Deserialize<Dictionary<string, string>>(agentOutputsJson, SerializerOptions)
             ?? new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
+    }
+
+    private static bool TryGetToolName(string agentId, out string toolName)
+    {
+        toolName = agentId switch
+        {
+            "DocumentAnalysisAgent" => "DocumentIntelligence",
+            "PolicyValidationAgent" => "PolicyManagement",
+            "FraudDetectionAgent" => "FraudDetection",
+            _ => string.Empty
+        };
+        return !string.IsNullOrEmpty(toolName);
     }
 
     private static ClaimAgentContext BuildAgentContext(
@@ -581,7 +609,8 @@ public sealed class ClaimPipelineOrchestrator : BackgroundService
 
         _claimMetrics.RecordClaimOutcome(claim.Status);
 
-        await _auditLogger.AppendAsync(new AuditLogEntry
+        var auditLogger = serviceProvider.GetRequiredService<IAuditLogger>();
+        await auditLogger.AppendAsync(new AuditLogEntry
         {
             ProviderId = claim.ProviderId,
             EventType = "MANUAL_REVIEW_ROUTED",

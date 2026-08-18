@@ -4,6 +4,8 @@ public sealed class ClaimIntakeConversationRequest
 {
     public string? SessionId { get; init; }
 
+    public Guid? EvaluationRunId { get; init; }
+
     public string? Message { get; init; }
 
     public Dictionary<string, string>? Fields { get; init; }
@@ -69,6 +71,12 @@ public sealed class IntakeSessionState
 
     public DateTime LastUpdatedUtc { get; set; }
 
+    public Guid? EvaluationRunId { get; set; }
+
+    public long? InputTokenCount { get; set; }
+
+    public long? OutputTokenCount { get; set; }
+
     public Dictionary<string, string> CollectedFields { get; } = new(StringComparer.OrdinalIgnoreCase);
 }
 
@@ -88,4 +96,21 @@ public sealed class DocumentUploadResponse
     public required string ContentType { get; init; }
 
     public required long SizeBytes { get; init; }
+}
+
+public sealed class ClaimStatusResponse
+{
+    public Guid ClaimId { get; init; }
+
+    public string Status { get; init; } = string.Empty;
+
+    public string CurrentStage { get; init; } = string.Empty;
+
+    public IReadOnlyList<string> CompletedStages { get; init; } = Array.Empty<string>();
+
+    public int EstimatedMinutesRemaining { get; init; }
+
+    public string StatusMessage { get; init; } = string.Empty;
+
+    public DateTime UpdatedAtUtc { get; init; }
 }

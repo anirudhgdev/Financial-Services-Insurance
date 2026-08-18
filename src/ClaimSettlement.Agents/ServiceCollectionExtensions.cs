@@ -1,12 +1,21 @@
 using ClaimSettlement.Agents.Pipeline;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 
 namespace ClaimSettlement.Agents;
 
 public static class ServiceCollectionExtensions
 {
-    public static IServiceCollection AddClaimSettlementAgents(this IServiceCollection services)
+    public static IServiceCollection AddClaimSettlementAgents(this IServiceCollection services, IConfiguration configuration)
     {
+        var foundrySection = configuration.GetSection(AzureAiFoundryOptions.SectionName);
+        services.Configure<AzureAiFoundryOptions>(options =>
+        {
+            options.Endpoint = foundrySection["Endpoint"] ?? string.Empty;
+            options.DeploymentName = foundrySection["DeploymentName"] ?? string.Empty;
+            options.Authentication = foundrySection["Authentication"] ?? "ManagedIdentity";
+        });
+        services.AddScoped<IClaimIntakeConversationService, AzureAiFoundryClaimIntakeConversationService>();
         services.AddScoped<IDocumentExtractionClient, SimulatedDocumentExtractionClient>();
         services.AddScoped<IDocumentDeduplicationService, DocumentDeduplicationService>();
         services.AddScoped<IGapClassificationService, GapClassificationService>();

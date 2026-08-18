@@ -1,5 +1,6 @@
 using Azure.Storage.Blobs;
 using ClaimSettlement.Domain.Entities;
+using ClaimSettlement.Domain.Identity;
 using ClaimSettlement.Infrastructure.Azure;
 using ClaimSettlement.Infrastructure.Persistence;
 using Microsoft.EntityFrameworkCore;
@@ -21,6 +22,7 @@ public sealed class ClaimIntakeService : IClaimIntakeService
     private readonly BlobServiceClient? _blobServiceClient;
     private readonly AzureStorageOptions _storageOptions;
     private readonly IProviderConfigurationService _providerConfigurationService;
+    private readonly IProviderContextAccessor _providerContextAccessor;
 
     public ClaimIntakeService(
         IMemoryCache memoryCache,
@@ -30,6 +32,7 @@ public sealed class ClaimIntakeService : IClaimIntakeService
         IDocumentUploadPolicy documentUploadPolicy,
         IOptions<AzureStorageOptions> storageOptions,
         IProviderConfigurationService providerConfigurationService,
+        IProviderContextAccessor providerContextAccessor,
         BlobServiceClient? blobServiceClient = null)
     {
         _memoryCache = memoryCache;
@@ -40,6 +43,7 @@ public sealed class ClaimIntakeService : IClaimIntakeService
         _blobServiceClient = blobServiceClient;
         _storageOptions = storageOptions.Value;
         _providerConfigurationService = providerConfigurationService;
+        _providerContextAccessor = providerContextAccessor;
     }
 
     public async Task<ClaimIntakeConversationResponse> ContinueConversationAsync(
@@ -51,6 +55,10 @@ public sealed class ClaimIntakeService : IClaimIntakeService
         ct.ThrowIfCancellationRequested();
 
         var session = GetOrCreateSession(request.SessionId, providerId, claimantId, ct);
+        if (request.EvaluationRunId.HasValue)
+        {
+            session.EvaluationRunId = request.EvaluationRunId;
+        }
         MergeInputIntoSession(session, request);
         session.LastUpdatedUtc = DateTime.UtcNow;
         _memoryCache.Set(GetCacheKey(session.SessionId), session, SessionTtl);
@@ -135,14 +143,18 @@ public sealed class ClaimIntakeService : IClaimIntakeService
             };
         }
 
-        var documentsCount = await CountUploadedDocumentsAsync(providerId, session.ClaimId, ct);
-        if (documentsCount == 0)
+        var allowsDocumentlessEvaluation = await IsOwnedEvaluationRunAsync(session.EvaluationRunId, providerId, claimantId, ct);
+        if (!allowsDocumentlessEvaluation)
         {
-            return new CompleteClaimIntakeResponse
+            var documentsCount = await CountUploadedDocumentsAsync(providerId, session.ClaimId, ct);
+            if (documentsCount == 0)
             {
-                Created = false,
-                Message = "At least one supporting document must be uploaded before submission."
-            };
+                return new CompleteClaimIntakeResponse
+                {
+                    Created = false,
+                    Message = "At least one supporting document must be uploaded before submission."
+                };
+            }
         }
 
         var existingClaim = await _dbContext.Claims
@@ -162,7 +174,8 @@ public sealed class ClaimIntakeService : IClaimIntakeService
                 LossAmount = decimal.Parse(session.CollectedFields["LossAmount"], CultureInfo.InvariantCulture),
                 Status = "INTAKE_COMPLETE",
                 CreatedAt = now,
-                UpdatedAt = now
+                UpdatedAt = now,
+                EvaluationRunId = session.EvaluationRunId
             };
 
             _dbContext.Claims.Add(claim);
@@ -176,7 +189,10 @@ public sealed class ClaimIntakeService : IClaimIntakeService
                     notificationEventType = "INTAKE_CONFIRMED",
                     message = "Your claim intake has been received and processing has started.",
                     eventTimestampUtc = now,
-                    claimStatus = "INTAKE_COMPLETE"
+                    claimStatus = "INTAKE_COMPLETE",
+                    tokenUsage = session.InputTokenCount.HasValue || session.OutputTokenCount.HasValue
+                        ? new { session.InputTokenCount, session.OutputTokenCount }
+                        : null
                 }),
                 CreatedAt = now,
                 SchemaVersion = "1.0"
@@ -193,6 +209,28 @@ public sealed class ClaimIntakeService : IClaimIntakeService
             ClaimId = session.ClaimId,
             Message = "Claim intake completed successfully."
         };
+    }
+
+    public void RecordTokenUsage(string sessionId, string providerId, string claimantId, long? inputTokenCount, long? outputTokenCount)
+    {
+        var session = GetExistingSession(sessionId, providerId, claimantId);
+        if (session is null)
+        {
+            return;
+        }
+
+        if (inputTokenCount.HasValue)
+        {
+            session.InputTokenCount = (session.InputTokenCount ?? 0) + inputTokenCount.Value;
+        }
+
+        if (outputTokenCount.HasValue)
+        {
+            session.OutputTokenCount = (session.OutputTokenCount ?? 0) + outputTokenCount.Value;
+        }
+
+        session.LastUpdatedUtc = DateTime.UtcNow;
+        _memoryCache.Set(GetCacheKey(session.SessionId), session, SessionTtl);
     }
 
     public async Task<DocumentUploadResponse> UploadDocumentAsync(
@@ -314,6 +352,21 @@ public sealed class ClaimIntakeService : IClaimIntakeService
         }
 
         return count;
+    }
+
+    private Task<bool> IsOwnedEvaluationRunAsync(Guid? runId, string providerId, string claimantId, CancellationToken ct)
+    {
+        if (!runId.HasValue ||
+            !_providerContextAccessor.Roles.Contains(AppRoles.EvaluationRunner, StringComparer.OrdinalIgnoreCase))
+        {
+            return Task.FromResult(false);
+        }
+
+        return _dbContext.EvaluationRuns.AnyAsync(run =>
+            run.RunId == runId.Value &&
+            run.ProviderId == providerId &&
+            run.CreatedByUserId == claimantId,
+            ct);
     }
 
     private BlobServiceClient GetRequiredBlobServiceClient()

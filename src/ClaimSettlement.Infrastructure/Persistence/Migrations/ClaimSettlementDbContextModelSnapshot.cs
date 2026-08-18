@@ -48,6 +48,11 @@ namespace ClaimSettlement.Infrastructure.Persistence.Migrations
                         .HasMaxLength(32)
                         .HasColumnType("nvarchar(32)");
 
+                    b.Property<string>("ProviderId")
+                        .IsRequired()
+                        .HasMaxLength(64)
+                        .HasColumnType("nvarchar(64)");
+
                     b.Property<string>("Rationale")
                         .HasMaxLength(4000)
                         .HasColumnType("nvarchar(4000)");
@@ -61,6 +66,8 @@ namespace ClaimSettlement.Infrastructure.Persistence.Migrations
                     b.HasIndex("AdjusterId", "AssignedAt");
 
                     b.HasIndex("ClaimId", "AssignedAt");
+
+                    b.HasIndex("ProviderId", "AssignedAt");
 
                     b.ToTable("AdjusterAssignments");
                 });
@@ -177,6 +184,9 @@ namespace ClaimSettlement.Infrastructure.Persistence.Migrations
                     b.Property<DateTime>("DateOfLoss")
                         .HasColumnType("datetime2");
 
+                    b.Property<Guid?>("EvaluationRunId")
+                        .HasColumnType("uniqueidentifier");
+
                     b.Property<decimal>("LossAmount")
                         .HasPrecision(18, 2)
                         .HasColumnType("decimal(18,2)");
@@ -202,6 +212,10 @@ namespace ClaimSettlement.Infrastructure.Persistence.Migrations
                         .HasDefaultValueSql("SYSUTCDATETIME()");
 
                     b.HasKey("ClaimId");
+
+                    b.HasIndex("EvaluationRunId");
+
+                    b.HasIndex("ProviderId", "EvaluationRunId");
 
                     b.HasIndex("ProviderId", "PolicyNumber", "DateOfLoss");
 
@@ -231,6 +245,10 @@ namespace ClaimSettlement.Infrastructure.Persistence.Migrations
                         .HasMaxLength(64)
                         .HasColumnType("nvarchar(64)");
 
+                    b.Property<string>("ProviderConfigSnapshot")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
                     b.Property<string>("ProviderId")
                         .IsRequired()
                         .HasMaxLength(64)
@@ -255,7 +273,40 @@ namespace ClaimSettlement.Infrastructure.Persistence.Migrations
                             t.HasCheckConstraint("CK_ClaimPipelineState_AgentOutputs_IsJson", "ISJSON([AgentOutputs]) = 1");
 
                             t.HasCheckConstraint("CK_ClaimPipelineState_CompletedSteps_IsJson", "ISJSON([CompletedSteps]) = 1");
+
+                            t.HasCheckConstraint("CK_ClaimPipelineState_ProviderConfigSnapshot_IsJson", "ISJSON([ProviderConfigSnapshot]) = 1");
                         });
+                });
+
+            modelBuilder.Entity("ClaimSettlement.Domain.Entities.EvaluationRun", b =>
+                {
+                    b.Property<Guid>("RunId")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<DateTime>("CreatedAtUtc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("CreatedByUserId")
+                        .IsRequired()
+                        .HasMaxLength(128)
+                        .HasColumnType("nvarchar(128)");
+
+                    b.Property<string>("DatasetVersion")
+                        .IsRequired()
+                        .HasMaxLength(64)
+                        .HasColumnType("nvarchar(64)");
+
+                    b.Property<string>("ProviderId")
+                        .IsRequired()
+                        .HasMaxLength(64)
+                        .HasColumnType("nvarchar(64)");
+
+                    b.HasKey("RunId");
+
+                    b.HasIndex("ProviderId", "CreatedByUserId", "RunId");
+
+                    b.ToTable("EvaluationRuns");
                 });
 
             modelBuilder.Entity("ClaimSettlement.Domain.Entities.ProviderConfiguration", b =>
@@ -340,6 +391,101 @@ namespace ClaimSettlement.Infrastructure.Persistence.Migrations
                         });
                 });
 
+            modelBuilder.Entity("ClaimSettlement.Domain.Entities.ProviderUserMembership", b =>
+                {
+                    b.Property<string>("ProviderId")
+                        .HasMaxLength(64)
+                        .HasColumnType("nvarchar(64)");
+
+                    b.Property<string>("UserId")
+                        .HasMaxLength(128)
+                        .HasColumnType("nvarchar(128)");
+
+                    b.Property<string>("Email")
+                        .HasMaxLength(256)
+                        .HasColumnType("nvarchar(256)");
+
+                    b.Property<DateTime>("FirstAccessedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<DateTime>("LastAccessedAt")
+                        .HasColumnType("datetime2");
+
+                    b.HasKey("ProviderId", "UserId");
+
+                    b.HasIndex("ProviderId", "LastAccessedAt");
+
+                    b.ToTable("ProviderUserMemberships");
+                });
+
+            modelBuilder.Entity("ClaimSettlement.Domain.Entities.ProviderUserRole", b =>
+                {
+                    b.Property<string>("ProviderId")
+                        .HasMaxLength(64)
+                        .HasColumnType("nvarchar(64)");
+
+                    b.Property<string>("UserId")
+                        .HasMaxLength(128)
+                        .HasColumnType("nvarchar(128)");
+
+                    b.Property<string>("Role")
+                        .HasMaxLength(64)
+                        .HasColumnType("nvarchar(64)");
+
+                    b.Property<DateTime>("AssignedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("AssignedByUserId")
+                        .IsRequired()
+                        .HasMaxLength(128)
+                        .HasColumnType("nvarchar(128)");
+
+                    b.HasKey("ProviderId", "UserId", "Role");
+
+                    b.ToTable("ProviderUserRoles");
+                });
+
+            modelBuilder.Entity("ClaimSettlement.Domain.Entities.ToolInvocationAudit", b =>
+                {
+                    b.Property<Guid>("InvocationId")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("AgentId")
+                        .IsRequired()
+                        .HasMaxLength(128)
+                        .HasColumnType("nvarchar(128)");
+
+                    b.Property<Guid>("ClaimId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<DateTime>("InvokedAtUtc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("Outcome")
+                        .IsRequired()
+                        .HasMaxLength(32)
+                        .HasColumnType("nvarchar(32)");
+
+                    b.Property<string>("ProviderId")
+                        .IsRequired()
+                        .HasMaxLength(64)
+                        .HasColumnType("nvarchar(64)");
+
+                    b.Property<string>("ToolName")
+                        .IsRequired()
+                        .HasMaxLength(128)
+                        .HasColumnType("nvarchar(128)");
+
+                    b.HasKey("InvocationId");
+
+                    b.HasIndex("ProviderId", "InvokedAtUtc");
+
+                    b.HasIndex("ClaimId", "AgentId", "InvokedAtUtc");
+
+                    b.ToTable("ToolInvocationAudits");
+                });
+
             modelBuilder.Entity("ClaimSettlement.Domain.Entities.AdjusterAssignment", b =>
                 {
                     b.HasOne("ClaimSettlement.Domain.Entities.Claim", "Claim")
@@ -372,11 +518,43 @@ namespace ClaimSettlement.Infrastructure.Persistence.Migrations
                     b.Navigation("Claim");
                 });
 
+            modelBuilder.Entity("ClaimSettlement.Domain.Entities.Claim", b =>
+                {
+                    b.HasOne("ClaimSettlement.Domain.Entities.EvaluationRun", "EvaluationRun")
+                        .WithMany("Claims")
+                        .HasForeignKey("EvaluationRunId")
+                        .OnDelete(DeleteBehavior.SetNull);
+
+                    b.Navigation("EvaluationRun");
+                });
+
             modelBuilder.Entity("ClaimSettlement.Domain.Entities.ClaimPipelineState", b =>
                 {
                     b.HasOne("ClaimSettlement.Domain.Entities.Claim", "Claim")
                         .WithOne("PipelineState")
                         .HasForeignKey("ClaimSettlement.Domain.Entities.ClaimPipelineState", "ClaimId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Claim");
+                });
+
+            modelBuilder.Entity("ClaimSettlement.Domain.Entities.ProviderUserRole", b =>
+                {
+                    b.HasOne("ClaimSettlement.Domain.Entities.ProviderUserMembership", "Membership")
+                        .WithMany("Roles")
+                        .HasForeignKey("ProviderId", "UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Membership");
+                });
+
+            modelBuilder.Entity("ClaimSettlement.Domain.Entities.ToolInvocationAudit", b =>
+                {
+                    b.HasOne("ClaimSettlement.Domain.Entities.Claim", "Claim")
+                        .WithMany("ToolInvocations")
+                        .HasForeignKey("ClaimId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
@@ -392,6 +570,18 @@ namespace ClaimSettlement.Infrastructure.Persistence.Migrations
                     b.Navigation("AuditLogs");
 
                     b.Navigation("PipelineState");
+
+                    b.Navigation("ToolInvocations");
+                });
+
+            modelBuilder.Entity("ClaimSettlement.Domain.Entities.EvaluationRun", b =>
+                {
+                    b.Navigation("Claims");
+                });
+
+            modelBuilder.Entity("ClaimSettlement.Domain.Entities.ProviderUserMembership", b =>
+                {
+                    b.Navigation("Roles");
                 });
 #pragma warning restore 612, 618
         }

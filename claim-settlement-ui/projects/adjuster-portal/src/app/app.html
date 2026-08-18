@@ -10,32 +10,56 @@
       <h2>Claim Queue</h2>
       <ul>
         @for (claim of queue(); track claim.claimId) {
-          <li>
-            <button type="button" (click)="selectClaim(claim.claimId)" [class.active]="selectedClaim().claimId === claim.claimId">
-              <span class="id">{{ claim.claimId }}</span>
-              <span class="meta">{{ claim.claimant }} - {{ claim.claimType }}</span>
-              <span class="badge" [attr.data-status]="claim.status">{{ claim.status }}</span>
-            </button>
-          </li>
+        <li>
+          <button type="button" (click)="selectClaim(claim.claimId)"
+            [class.active]="selectedClaim()?.claimId === claim.claimId">
+            <span class="id">{{ claim.claimId }}</span>
+            <span class="meta">{{ claim.claimantId }} - {{ claim.claimType }}</span>
+            <span class="badge" [attr.data-status]="claim.status">{{ claim.status }}</span>
+          </button>
+        </li>
         }
       </ul>
+      <div class="pagination">
+        <button type="button" (click)="changePage(page() - 1)" [disabled]="page() === 1">Previous</button>
+        <span>Page {{ page() }}</span>
+        <button type="button" (click)="changePage(page() + 1)"
+          [disabled]="page() * pageSize >= totalCount()">Next</button>
+      </div>
     </aside>
 
     <main class="detail">
-      <article class="package">
+      @if (error()) { <p class="message">{{ error() }}</p> }
+      @if (selectedClaim(); as claim) { <article class="package">
         <h2>AI Review Package</h2>
         <dl>
-          <div><dt>Claim</dt><dd>{{ selectedClaim().claimId }}</dd></div>
-          <div><dt>Priority</dt><dd>{{ selectedClaim().priority }}</dd></div>
-          <div><dt>Assigned Adjuster</dt><dd>{{ selectedClaim().assignedAdjuster }}</dd></div>
-          <div><dt>Recommended Settlement</dt><dd>{{ selectedClaim().recommendedAmount | currency:'USD' }}</dd></div>
+          <div>
+            <dt>Claim</dt>
+            <dd>{{ claim.claimId }}</dd>
+          </div>
+          <div>
+            <dt>Priority</dt>
+            <dd>{{ claim.priority }}</dd>
+          </div>
+          <div>
+            <dt>Assigned Adjuster</dt>
+            <dd>{{ claim.assignedAdjusterId ?? 'Pending assignment' }}</dd>
+          </div>
+          <div>
+            <dt>Recommended Settlement</dt>
+            <dd>{{ reviewPackage()?.recommendedSettlementAmount | currency:'USD' }}</dd>
+          </div>
         </dl>
-        <p>
-          Policy validation indicates active coverage with deductible applied. Fraud analysis flagged medium anomaly due to
-          round amount and recent policy inception. Document analysis reported one low-confidence field requiring adjuster
-          confirmation before final payment.
-        </p>
+        <div>
+          {{ reviewPackage()?.claimSummary }} {{ reviewPackage()?.policyValidationSummary }} {{
+          reviewPackage()?.fraudSummary }}
+          <p><strong>Documents:</strong> {{ reviewPackage()?.documentHighlights }}</p>
+          <p><strong>Decision reasoning:</strong> {{ reviewPackage()?.settlementReasoning }}</p>
+          @if (reviewPackage()?.missingSections?.length) { <p><strong>Missing sections:</strong> {{
+            reviewPackage()?.missingSections?.join(', ') }}</p> }
+        </div>
       </article>
+      } @else { <p>Select a claim from the queue to review it.</p> }
 
       <article class="decision-panel">
         <h2>Submit Decision</h2>
@@ -60,7 +84,7 @@
 
         <button type="button" (click)="submitDecision()">Submit</button>
         @if (message) {
-          <p class="message">{{ message }}</p>
+        <p class="message">{{ message }}</p>
         }
       </article>
     </main>

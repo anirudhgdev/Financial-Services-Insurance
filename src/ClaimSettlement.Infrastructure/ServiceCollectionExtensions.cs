@@ -17,8 +17,12 @@ public static class ServiceCollectionExtensions
         this IServiceCollection services,
         IConfiguration configuration)
     {
-        services.AddDbContext<ClaimSettlementDbContext>(options =>
-            options.UseSqlServer(configuration.GetConnectionString("ClaimSettlementDb")));
+        services.AddSingleton<IProviderSqlSessionContext, ProviderSqlSessionContext>();
+        services.AddSingleton<ProviderSqlSessionConnectionInterceptor>();
+        services.AddDbContext<ClaimSettlementDbContext>((serviceProvider, options) =>
+            options
+                .UseSqlServer(configuration.GetConnectionString("ClaimSettlementDb"))
+                .AddInterceptors(serviceProvider.GetRequiredService<ProviderSqlSessionConnectionInterceptor>()));
 
         services.AddMemoryCache();
 

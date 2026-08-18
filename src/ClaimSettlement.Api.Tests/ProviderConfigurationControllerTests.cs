@@ -97,6 +97,58 @@ public sealed class ProviderConfigurationControllerTests
         Assert.Equal(25, read.PipelineConcurrencyLimit);
     }
 
+    [Fact]
+    public async Task UpdatesLocalApplicationRolesForProviderUser()
+    {
+        await using var dbContext = BuildDbContext();
+        using var memoryCache = BuildMemoryCache();
+        dbContext.ProviderUserMemberships.Add(new ProviderUserMembership
+        {
+            ProviderId = "provider-1",
+            UserId = "user-1",
+            Email = "user@example.com",
+            FirstAccessedAt = DateTime.UtcNow.AddDays(-1),
+            LastAccessedAt = DateTime.UtcNow
+        });
+        await dbContext.SaveChangesAsync();
+        var controller = new ProvidersController(new ProviderConfigurationService(dbContext, memoryCache), new TestProviderContextAccessor("provider-1"), dbContext, new NoOpAuditLogger());
+
+        var response = await controller.UpdateProviderUserRoles(
+            "provider-1",
+            "user-1",
+            new UpdateProviderUserRolesRequest { Roles = [AppRoles.Customer, AppRoles.Adjuster] },
+            CancellationToken.None);
+
+        var ok = Assert.IsType<OkObjectResult>(response.Result);
+        var user = Assert.IsType<ProviderUserAccessResponse>(ok.Value);
+        Assert.Equal([AppRoles.Adjuster, AppRoles.Customer], user.Roles.Order());
+        Assert.Equal(2, await dbContext.ProviderUserRoles.CountAsync());
+    }
+
+    [Fact]
+    public async Task RejectsPlatformAdminRoleForLocalProviderAssignment()
+    {
+        await using var dbContext = BuildDbContext();
+        using var memoryCache = BuildMemoryCache();
+        dbContext.ProviderUserMemberships.Add(new ProviderUserMembership
+        {
+            ProviderId = "provider-1",
+            UserId = "user-1",
+            FirstAccessedAt = DateTime.UtcNow,
+            LastAccessedAt = DateTime.UtcNow
+        });
+        await dbContext.SaveChangesAsync();
+        var controller = new ProvidersController(new ProviderConfigurationService(dbContext, memoryCache), new TestProviderContextAccessor("provider-1"), dbContext, new NoOpAuditLogger());
+
+        var response = await controller.UpdateProviderUserRoles(
+            "provider-1",
+            "user-1",
+            new UpdateProviderUserRolesRequest { Roles = [AppRoles.PlatformAdmin] },
+            CancellationToken.None);
+
+        Assert.IsType<BadRequestObjectResult>(response.Result);
+    }
+
     private static ClaimSettlementDbContext BuildDbContext()
     {
         var options = new DbContextOptionsBuilder<ClaimSettlementDbContext>()
